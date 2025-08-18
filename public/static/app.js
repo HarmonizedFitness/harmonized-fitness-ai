@@ -131,30 +131,38 @@ class FitnessAssessment {
       return;
     }
     
-    // DEMO MODE: Skip API call and proceed directly
-    // When database is ready, replace this section with:
-    // try {
-    //   const response = await axios.post('/api/users', { full_name: data.full_name, email: data.email, age: parseInt(data.age), gender: data.gender });
-    //   if (response.data.success) { this.userData = { ...data, user_id: response.data.user_id }; this.currentPhase = 2; this.renderPhase2(); }
-    // } catch (error) { this.showError('Something went wrong. Please try again.'); }
-    
-    // For now: Store user data locally for demo purposes
-    this.userData = { 
-      ...data, 
-      user_id: 'demo-' + Date.now(), // Generate a demo user ID
-      age: parseInt(data.age)
-    };
-    
-    // Show brief loading animation for realism
+    // Show loading state
     const button = form.querySelector('button[type="submit"]');
     const originalText = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating Profile...';
     button.disabled = true;
     
-    setTimeout(() => {
-      this.currentPhase = 2;
-      this.renderPhase2();
-    }, 800); // Brief delay for better UX
+    try {
+      const response = await axios.post('/api/users', { 
+        full_name: data.full_name, 
+        email: data.email, 
+        age: parseInt(data.age), 
+        gender: data.gender 
+      });
+      
+      if (response.data.success) {
+        this.userData = { 
+          ...data, 
+          user_id: response.data.user_id,
+          age: parseInt(data.age)
+        };
+        this.currentPhase = 2;
+        this.renderPhase2();
+      } else {
+        this.showError('Failed to create profile. Please try again.');
+      }
+    } catch (error) {
+      console.error('Phase 1 API Error:', error);
+      this.showError('Connection error. Please check your internet and try again.');
+    } finally {
+      button.innerHTML = originalText;
+      button.disabled = false;
+    }
   }
   
   // =======================================================================
@@ -247,6 +255,78 @@ class FitnessAssessment {
           </div>
         </div>
         
+        <div>
+          <label class="block text-white font-semibold mb-4">
+            <i class="fas fa-clock mr-2 text-burnt-orange"></i>How long can you dedicate to each session?
+          </label>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <label class="cursor-pointer">
+              <input type="radio" name="workout_duration" value="15-30" class="sr-only">
+              <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option text-center">
+                <div class="font-bold text-white">15-30 min</div>
+                <div class="text-xs text-gray-400">Quick & focused</div>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="workout_duration" value="30-45" class="sr-only">
+              <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option text-center">
+                <div class="font-bold text-white">30-45 min</div>
+                <div class="text-xs text-gray-400">Balanced sessions</div>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="workout_duration" value="45-60" class="sr-only">
+              <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option text-center">
+                <div class="font-bold text-white">45-60 min</div>
+                <div class="text-xs text-gray-400">Deep training</div>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="workout_duration" value="60+" class="sr-only">
+              <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option text-center">
+                <div class="font-bold text-white">60+ min</div>
+                <div class="text-xs text-gray-400">Elite sessions</div>
+              </div>
+            </label>
+          </div>
+        </div>
+        
+        <div>
+          <label class="block text-white font-semibold mb-4">
+            <i class="fas fa-location-arrow mr-2 text-burnt-orange"></i>Where will you primarily train?
+          </label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label class="cursor-pointer">
+              <input type="radio" name="workout_environment" value="home_focused" class="sr-only">
+              <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
+                <div class="font-bold text-white mb-1"><i class="fas fa-home mr-2"></i>Home & Natural Spaces</div>
+                <div class="text-sm text-gray-400">Living room, backyard, local park</div>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="workout_environment" value="gym_access" class="sr-only">
+              <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
+                <div class="font-bold text-white mb-1"><i class="fas fa-dumbbell mr-2"></i>Full Gym Access</div>
+                <div class="text-sm text-gray-400">Complete equipment and space</div>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="workout_environment" value="equipment_limited" class="sr-only">
+              <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
+                <div class="font-bold text-white mb-1"><i class="fas fa-tools mr-2"></i>Minimal Equipment</div>
+                <div class="text-sm text-gray-400">Bands, light weights, bodyweight</div>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="workout_environment" value="time_constrained" class="sr-only">
+              <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
+                <div class="font-bold text-white mb-1"><i class="fas fa-bolt mr-2"></i>Time-Efficient Focus</div>
+                <div class="text-sm text-gray-400">Maximum results, minimal time</div>
+              </div>
+            </label>
+          </div>
+        </div>
+        
         <div class="flex justify-between pt-6">
           <button type="button" onclick="assessment.renderPhase1()" 
                   class="px-6 py-3 text-gray-400 hover:text-white transition-colors">
@@ -254,7 +334,7 @@ class FitnessAssessment {
           </button>
           <button type="submit" 
                   class="bg-burnt-orange hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105">
-            Generate My Workout! <i class="fas fa-magic ml-2"></i>
+            Generate My Program! <i class="fas fa-magic ml-2"></i>
           </button>
         </div>
       </form>
@@ -265,15 +345,60 @@ class FitnessAssessment {
     // Handle form submission
     document.getElementById('phase2-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      this.generateDemoWorkout();
+      this.handlePhase2Submit(e.target);
     });
   }
   
   // =======================================================================
-  // DEMO WORKOUT GENERATION (No database required)
+  // PHASE 2 FORM SUBMISSION - Real API Call
   // =======================================================================
   
-  generateDemoWorkout() {
+  async handlePhase2Submit(form) {
+    const formData = new FormData(form);
+    const data = {
+      experience_level: formData.get('experience_level'),
+      primary_goal: formData.get('primary_goal'),
+      workout_duration: formData.get('workout_duration'),
+      workout_environment: formData.get('workout_environment')
+    };
+    
+    // Validation
+    if (!data.experience_level || !data.primary_goal || !data.workout_duration || !data.workout_environment) {
+      this.showError('Please complete all fields to continue');
+      return;
+    }
+    
+    const button = form.querySelector('button[type="submit"]');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving Profile...';
+    button.disabled = true;
+    
+    try {
+      // Save fitness profile
+      const response = await axios.post(`/api/users/${this.userData.user_id}/fitness-profile`, data);
+      
+      if (response.data.success) {
+        // Add fitness profile to userData
+        this.userData.fitness_profile = data;
+        // Skip equipment and injuries for now (use defaults)
+        this.startProgramGeneration();
+      } else {
+        this.showError('Failed to save fitness profile. Please try again.');
+      }
+    } catch (error) {
+      console.error('Phase 2 API Error:', error);
+      this.showError('Connection error. Please check your internet and try again.');
+    } finally {
+      button.innerHTML = originalText;
+      button.disabled = false;
+    }
+  }
+  
+  // =======================================================================
+  // AI PROGRAM GENERATION - Real API Call
+  // =======================================================================
+  
+  async startProgramGeneration() {
     // Show loading state
     this.content.innerHTML = `
       <div class="text-center py-16">
@@ -301,10 +426,30 @@ class FitnessAssessment {
     // Animate progress bar
     this.animateProgress();
     
-    // Simulate processing time with realistic stages
-    setTimeout(() => {
-      this.showEnhancedWorkout();
-    }, 5000);
+    try {
+      // Add default equipment and injuries for simplicity
+      await axios.post(`/api/users/${this.userData.user_id}/equipment`, {
+        equipment: ['bodyweight', 'resistance_bands', 'dumbbells'] // Default equipment
+      });
+      
+      await axios.post(`/api/users/${this.userData.user_id}/injuries`, {
+        injuries: [] // No injuries by default
+      });
+      
+      // Generate full 14-day program with email delivery
+      const response = await axios.post(`/api/users/${this.userData.user_id}/generate-program`);
+      
+      if (response.data.success) {
+        setTimeout(() => {
+          this.showProgramSuccess(response.data.program);
+        }, 3000);
+      } else {
+        this.showError('Failed to generate program. Please try again.');
+      }
+    } catch (error) {
+      console.error('Program Generation Error:', error);
+      this.showError('Failed to create your program. Please try again.');
+    }
   }
 
   animateProgress() {
@@ -331,107 +476,63 @@ class FitnessAssessment {
     }, 800);
   }
   
-  showEnhancedWorkout() {
+  showProgramSuccess(program) {
     this.content.innerHTML = `
       <div class="text-center mb-8">
         <div class="mb-6">
-          <i class="fas fa-trophy text-6xl text-burnt-orange mb-4"></i>
-          <h2 class="text-4xl font-bold text-white mb-4">Your Personalized Workout is Ready!</h2>
-          <p class="text-gray-400 text-lg">Based on your profile, here's your custom fitness plan</p>
+          <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
+          <h2 class="text-4xl font-bold text-white mb-4">🎉 Your Program is Ready!</h2>
+          <p class="text-gray-400 text-lg">Your personalized 14-day program has been created and delivery has started!</p>
         </div>
       </div>
       
-      <div class="bg-gradient-to-r from-burnt-orange/20 to-orange-900/20 rounded-lg p-6 mb-8">
-        <h3 class="text-2xl font-bold text-white mb-4">Your Complete 14-Day Harmonized Fitness Program</h3>
-        <div class="grid grid-cols-1 md:grid-4 gap-4 text-center mb-6">
+      <div class="bg-gradient-to-r from-green-900/20 to-burnt-orange/20 rounded-lg p-6 mb-8">
+        <h3 class="text-2xl font-bold text-white mb-4">📧 Email Delivery Started!</h3>
+        <div class="bg-black/20 rounded-lg p-4 mb-4">
+          <p class="text-white mb-2"><strong>✅ Day 1 workout sent to:</strong> ${this.userData.email}</p>
+          <p class="text-gray-400 text-sm">Check your inbox (and spam folder) in the next few minutes</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-6">
           <div>
-            <i class="fas fa-calendar text-2xl text-burnt-orange mb-2"></i>
+            <i class="fas fa-calendar text-2xl text-green-500 mb-2"></i>
             <div class="text-white font-bold">14 Days</div>
-            <div class="text-gray-400 text-sm">Total Program</div>
+            <div class="text-gray-400 text-sm">Complete Program</div>
           </div>
           <div>
-            <i class="fas fa-dumbbell text-2xl text-burnt-orange mb-2"></i>
-            <div class="text-white font-bold">10 Workouts</div>
-            <div class="text-gray-400 text-sm">Progressive Training</div>
+            <i class="fas fa-clock text-2xl text-green-500 mb-2"></i>
+            <div class="text-white font-bold">6:00 AM</div>
+            <div class="text-gray-400 text-sm">Daily Delivery</div>
           </div>
           <div>
-            <i class="fas fa-heart text-2xl text-burnt-orange mb-2"></i>
-            <div class="text-white font-bold">4 Rest Days</div>
-            <div class="text-gray-400 text-sm">Strategic Recovery</div>
-          </div>
-          <div>
-            <i class="fas fa-email text-2xl text-burnt-orange mb-2"></i>
-            <div class="text-white font-bold">Auto Delivery</div>
-            <div class="text-gray-400 text-sm">Daily to Your Inbox</div>
-          </div>
-        </div>
-        <div class="bg-black/20 rounded-lg p-4">
-          <h4 class="text-white font-bold mb-3">🎯 Personalized to Your Goals:</h4>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-            <div>✓ ${this.userData.experience_level || 'Intermediate'} level exercises</div>
-            <div>✓ ${this.userData.workout_duration || '30-45'} minute sessions</div>
-            <div>✓ ${this.userData.primary_goal ? this.userData.primary_goal.replace('_', ' ') : 'Strength & conditioning'} focused</div>
-            <div>✓ Equipment: ${this.userData.equipment || 'Bodyweight & basic gear'}</div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="space-y-6 mb-8">
-        <div>
-          <h4 class="text-xl font-bold text-white mb-3"><i class="fas fa-play text-burnt-orange mr-2"></i>Warm-up (5 minutes)</h4>
-          <div class="bg-charcoal rounded-lg p-4">
-            <ul class="text-gray-300 space-y-1">
-              <li>• Jumping Jacks - 30 seconds</li>
-              <li>• Bodyweight Squats - 30 seconds</li>
-              <li>• Arm Circles - 30 seconds</li>
-              <li>• High Knees - 30 seconds</li>
-            </ul>
+            <i class="fas fa-dumbbell text-2xl text-green-500 mb-2"></i>
+            <div class="text-white font-bold">Advanced</div>
+            <div class="text-gray-400 text-sm">Techniques Included</div>
           </div>
         </div>
         
-        <div>
-          <h4 class="text-xl font-bold text-white mb-3"><i class="fas fa-dumbbell text-burnt-orange mr-2"></i>Main Workout (20 minutes)</h4>
-          <div class="space-y-3">
-            <div class="bg-charcoal rounded-lg p-4">
-              <div class="flex justify-between items-start">
-                <div class="flex-1">
-                  <h5 class="font-bold text-white mb-2">1. Push-ups</h5>
-                  <p class="text-gray-400 text-sm mb-2">3 sets x 10-15 reps</p>
-                  <div class="flex items-center text-sm text-gray-500">
-                    <span class="mr-4"><i class="fas fa-target mr-1"></i>Chest, Shoulders, Triceps</span>
-                    <span><i class="fas fa-fire mr-1"></i>High intensity</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="bg-charcoal rounded-lg p-4">
-              <div class="flex justify-between items-start">
-                <div class="flex-1">
-                  <h5 class="font-bold text-white mb-2">2. Burpees</h5>
-                  <p class="text-gray-400 text-sm mb-2">3 sets x 8-12 reps</p>
-                  <div class="flex items-center text-sm text-gray-500">
-                    <span class="mr-4"><i class="fas fa-target mr-1"></i>Full Body</span>
-                    <span><i class="fas fa-fire mr-1"></i>Max intensity</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="bg-charcoal rounded-lg p-4">
-              <div class="flex justify-between items-start">
-                <div class="flex-1">
-                  <h5 class="font-bold text-white mb-2">3. Mountain Climbers</h5>
-                  <p class="text-gray-400 text-sm mb-2">3 sets x 30 seconds</p>
-                  <div class="flex items-center text-sm text-gray-500">
-                    <span class="mr-4"><i class="fas fa-target mr-1"></i>Core, Cardio</span>
-                    <span><i class="fas fa-fire mr-1"></i>High intensity</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="bg-charcoal rounded-lg p-4">
+        <div class="bg-black/20 rounded-lg p-4">
+          <h4 class="text-white font-bold mb-3">🎯 Your Personalized Program Includes:</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div>✓ ${this.userData.fitness_profile?.experience_level || 'Advanced'} level techniques</div>
+            <div>✓ ${this.userData.fitness_profile?.workout_duration || '60+'} minute sessions</div>
+            <div>✓ ${this.userData.fitness_profile?.primary_goal?.replace('_', ' ') || 'Strength & Power'} focused</div>
+            <div>✓ ${this.userData.fitness_profile?.workout_environment?.replace('_', ' ') || 'Full gym access'}</div>
+            <div>✓ Supersets & Drop Sets (Advanced users)</div>
+            <div>✓ Military-inspired functional movements</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-charcoal rounded-lg p-6 mb-8">
+        <h4 class="text-xl font-bold text-white mb-4">📋 What's Next?</h4>
+        <ul class="space-y-3 text-gray-300">
+          <li><i class="fas fa-envelope text-green-500 mr-3"></i><strong>Check your email</strong> - Day 1 workout is waiting for you</li>
+          <li><i class="fas fa-clock text-blue-500 mr-3"></i><strong>Daily delivery at 6 AM</strong> - New workouts arrive automatically</li>
+          <li><i class="fas fa-phone text-burnt-orange mr-3"></i><strong>Personal check-in</strong> - Kyle will reach out after Day 3</li>
+          <li><i class="fas fa-users text-purple-500 mr-3"></i><strong>Community access</strong> - Join our private veteran fitness group</li>
+        </ul>
+      </div>
               <div class="flex justify-between items-start">
                 <div class="flex-1">
                   <h5 class="font-bold text-white mb-2">4. Plank Hold</h5>
@@ -495,38 +596,6 @@ class FitnessAssessment {
     document.getElementById('claim-program').addEventListener('click', () => {
       this.claimProgram();
     });
-  }
-  
-  claimProgram() {
-    // Show success message
-    this.content.innerHTML = `
-      <div class="text-center py-16">
-        <i class="fas fa-check-circle text-8xl text-green-500 mb-6"></i>
-        <h2 class="text-4xl font-bold text-white mb-4">Welcome to Harmonized Fitness!</h2>
-        <p class="text-xl text-gray-300 mb-8">Your FREE 14-day program is on its way to <strong>${this.userData.email}</strong></p>
-        
-        <div class="bg-gradient-to-r from-burnt-orange/20 to-orange-900/20 rounded-lg p-6 mb-8 max-w-2xl mx-auto">
-          <h3 class="text-xl font-bold text-white mb-4">What happens next?</h3>
-          <ul class="text-gray-300 space-y-3 text-left">
-            <li><i class="fas fa-envelope text-burnt-orange mr-3"></i>Check your email for your complete program (arriving in 2-3 minutes)</li>
-            <li><i class="fas fa-calendar text-burnt-orange mr-3"></i>Start Day 1 tomorrow morning for best results</li>
-            <li><i class="fas fa-phone text-burnt-orange mr-3"></i>Kyle will personally check in with you after Day 3</li>
-            <li><i class="fas fa-star text-burnt-orange mr-3"></i>Bonus: Access to our private military fitness community</li>
-          </ul>
-        </div>
-        
-        <div class="space-y-4">
-          <button onclick="window.open('https://harmonizedfitness.com', '_blank')" 
-                  class="bg-burnt-orange hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 mr-4">
-            <i class="fas fa-external-link-alt mr-2"></i>Visit HarmonizedFitness.com
-          </button>
-          <button onclick="assessment.closeModal()" 
-                  class="border border-gray-600 hover:border-white text-gray-400 hover:text-white font-bold py-3 px-8 rounded-lg transition-all duration-300">
-            <i class="fas fa-times mr-2"></i>Close
-          </button>
-        </div>
-      </div>
-    `;
   }
   
   // =======================================================================
