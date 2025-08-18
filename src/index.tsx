@@ -467,11 +467,24 @@ async function generateWorkoutPlan(db: D1Database, profile: any) {
   const maxDifficulty = {
     'beginner': 2,
     'intermediate': 3,
-    'advanced': 4,
+    'advanced': 5,  // Advanced users get access to all techniques
     'expert': 5
   }[fitness_profile.experience_level] || 2
   
-  query += ` AND e.difficulty_level <= ? ORDER BY RANDOM() LIMIT 8`
+  // For advanced/expert users, prioritize advanced techniques (supersets, drops, partials)
+  if (fitness_profile.experience_level === 'advanced' || fitness_profile.experience_level === 'expert') {
+    query += ` AND e.difficulty_level <= ? 
+               ORDER BY 
+                 CASE 
+                   WHEN e.name LIKE '%Superset%' OR e.name LIKE '%Drop Set%' OR e.name LIKE '%Partial%' OR e.name LIKE '%Pulse%' THEN 1
+                   WHEN e.difficulty_level >= 4 THEN 2
+                   ELSE 3
+                 END, 
+                 RANDOM() 
+               LIMIT 8`
+  } else {
+    query += ` AND e.difficulty_level <= ? ORDER BY RANDOM() LIMIT 8`
+  }
   
   const params = [...equipment]
   if (injuries.length > 0) {
