@@ -238,7 +238,79 @@ app.get('/api/users/:id/profile', async (c) => {
 // AI WORKOUT GENERATION ENDPOINTS
 // =============================================================================
 
-// Generate personalized workout plan
+// Generate personalized 14-day program and initiate delivery
+app.post('/api/users/:id/generate-program', async (c) => {
+  try {
+    const userId = c.req.param('id')
+    
+    // Get complete user profile
+    const profileResponse = await fetch(`${c.req.url.replace(/\/api\/users\/\d+\/generate-program$/, '')}/api/users/${userId}/profile`)
+    const profile = await profileResponse.json()
+    
+    if (!profile.user || !profile.fitness_profile) {
+      return c.json({ error: 'Complete profile required for program generation' }, 400)
+    }
+    
+    // Get all exercises from database
+    const exercisesResult = await c.env.DB.prepare('SELECT * FROM exercises WHERE is_active = 1').all()
+    const exercises = exercisesResult.results || []
+    
+    // Generate full 14-day program using AI
+    const { ProgramGenerator } = await import('./ai-program-generator.js')
+    const programGenerator = new ProgramGenerator()
+    const fullProgram = await programGenerator.generatePersonalized14DayProgram(profile, exercises)
+    
+    // Save generated program
+    const result = await c.env.DB.prepare(`
+      INSERT INTO generated_workouts 
+      (user_id, workout_date, estimated_duration, estimated_calories, difficulty_score, workout_data) 
+      VALUES (?, date('now'), ?, ?, ?, ?)
+    `).bind(
+      userId,
+      fullProgram.daily_plans[1].estimated_duration,
+      350, // Average estimated calories for program
+      fullProgram.daily_plans[1].difficulty_level,
+      JSON.stringify(fullProgram)
+    ).run()
+    
+    const programId = result.meta.last_row_id
+    
+    // Initiate automated email delivery
+    const { EmailAutomation } = await import('./email-automation.js')
+    const emailSystem = new EmailAutomation()
+    const deliveryResult = await emailSystem.startProgramDelivery(
+      profile, 
+      { ...fullProgram, id: programId }, 
+      profile.user.email
+    )
+    
+    // Track funnel event
+    await c.env.DB.prepare(`
+      INSERT INTO lead_funnel_events (user_id, event_type, event_data) 
+      VALUES (?, 'program_generated', ?)
+    `).bind(userId, JSON.stringify({ 
+      program_id: programId,
+      goal: profile.fitness_profile.primary_goal,
+      email_delivery: deliveryResult.success,
+      total_days: 14,
+      workout_days: 10,
+      rest_days: 4
+    })).run()
+    
+    return c.json({ 
+      success: true, 
+      program_id: programId,
+      program: fullProgram,
+      email_delivery: deliveryResult,
+      message: 'Your personalized 14-day program has been generated and delivery initiated!'
+    })
+  } catch (error) {
+    console.error('Error generating program:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Legacy endpoint for backward compatibility (simplified demo version)
 app.post('/api/users/:id/generate-workout', async (c) => {
   try {
     const userId = c.req.param('id')
@@ -251,36 +323,13 @@ app.post('/api/users/:id/generate-workout', async (c) => {
       return c.json({ error: 'Complete profile required for workout generation' }, 400)
     }
     
-    // Simple AI matching algorithm (will enhance with Cloudflare AI later)
+    // Simple AI matching algorithm for demo
     const workoutPlan = await generateWorkoutPlan(c.env.DB, profile)
-    
-    // Save generated workout
-    const result = await c.env.DB.prepare(`
-      INSERT INTO generated_workouts 
-      (user_id, workout_date, estimated_duration, estimated_calories, difficulty_score, workout_data) 
-      VALUES (?, date('now'), ?, ?, ?, ?)
-    `).bind(
-      userId,
-      workoutPlan.estimated_duration,
-      workoutPlan.estimated_calories,
-      workoutPlan.difficulty_score,
-      JSON.stringify(workoutPlan)
-    ).run()
-    
-    // Track funnel event
-    await c.env.DB.prepare(`
-      INSERT INTO lead_funnel_events (user_id, event_type, event_data) 
-      VALUES (?, 'workout_generated', ?)
-    `).bind(userId, JSON.stringify({ 
-      workout_id: result.meta.last_row_id,
-      goal: profile.fitness_profile.primary_goal,
-      duration: workoutPlan.estimated_duration
-    })).run()
     
     return c.json({ 
       success: true, 
-      workout_id: result.meta.last_row_id,
-      workout: workoutPlan 
+      workout: workoutPlan,
+      message: 'Demo workout generated - upgrade to full program for 14-day delivery!'
     })
   } catch (error) {
     console.error('Error generating workout:', error)

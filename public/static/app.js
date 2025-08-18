@@ -279,25 +279,59 @@ class FitnessAssessment {
       <div class="text-center py-16">
         <div class="mb-8">
           <i class="fas fa-cog fa-spin text-6xl text-burnt-orange mb-4"></i>
-          <h2 class="text-3xl font-bold text-white mb-4">Generating Your Personalized Workout</h2>
-          <p class="text-gray-400 text-lg">Our AI is analyzing your profile and creating the perfect fitness plan...</p>
+          <h2 class="text-3xl font-bold text-white mb-4">AI is Creating Your Complete 14-Day Program</h2>
+          <p class="text-gray-400 text-lg">Analyzing your profile and generating personalized workouts...</p>
+          <div class="mt-4 text-sm text-gray-500 space-y-1">
+            <div>✓ Processing fitness goals and experience level</div>
+            <div>✓ Matching exercises to available equipment</div>
+            <div>✓ Creating progressive 10-workout plan</div>
+            <div>✓ Scheduling 4 strategic rest days</div>
+            <div>✓ Preparing automated email delivery</div>
+          </div>
         </div>
         <div class="max-w-md mx-auto">
           <div class="bg-gray-800 rounded-full h-2 mb-4">
-            <div class="bg-burnt-orange h-2 rounded-full animate-pulse" style="width: 85%"></div>
+            <div class="bg-burnt-orange h-2 rounded-full" id="progress-bar" style="width: 10%"></div>
           </div>
-          <p class="text-sm text-gray-500">Matching exercises to your goals and equipment...</p>
+          <p class="text-sm text-gray-500" id="progress-text">Initializing AI program generator...</p>
         </div>
       </div>
     `;
     
-    // Simulate processing time
+    // Animate progress bar
+    this.animateProgress();
+    
+    // Simulate processing time with realistic stages
     setTimeout(() => {
-      this.showDemoWorkout();
-    }, 3000);
+      this.showEnhancedWorkout();
+    }, 5000);
+  }
+
+  animateProgress() {
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const stages = [
+      { width: 20, text: 'Analyzing user profile...' },
+      { width: 40, text: 'Selecting optimal exercises...' },
+      { width: 60, text: 'Creating 14-day progression...' },
+      { width: 80, text: 'Generating nutrition guidance...' },
+      { width: 95, text: 'Preparing email delivery system...' },
+      { width: 100, text: 'Program complete!' }
+    ];
+
+    let currentStage = 0;
+    const interval = setInterval(() => {
+      if (currentStage < stages.length) {
+        progressBar.style.width = stages[currentStage].width + '%';
+        progressText.textContent = stages[currentStage].text;
+        currentStage++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 800);
   }
   
-  showDemoWorkout() {
+  showEnhancedWorkout() {
     this.content.innerHTML = `
       <div class="text-center mb-8">
         <div class="mb-6">
@@ -308,22 +342,36 @@ class FitnessAssessment {
       </div>
       
       <div class="bg-gradient-to-r from-burnt-orange/20 to-orange-900/20 rounded-lg p-6 mb-8">
-        <h3 class="text-2xl font-bold text-white mb-4">Military-Style HIIT Workout</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+        <h3 class="text-2xl font-bold text-white mb-4">Your Complete 14-Day Harmonized Fitness Program</h3>
+        <div class="grid grid-cols-1 md:grid-4 gap-4 text-center mb-6">
           <div>
-            <i class="fas fa-clock text-2xl text-burnt-orange mb-2"></i>
-            <div class="text-white font-bold">30 minutes</div>
-            <div class="text-gray-400 text-sm">Duration</div>
+            <i class="fas fa-calendar text-2xl text-burnt-orange mb-2"></i>
+            <div class="text-white font-bold">14 Days</div>
+            <div class="text-gray-400 text-sm">Total Program</div>
           </div>
           <div>
-            <i class="fas fa-fire text-2xl text-burnt-orange mb-2"></i>
-            <div class="text-white font-bold">~350 calories</div>
-            <div class="text-gray-400 text-sm">Estimated burn</div>
+            <i class="fas fa-dumbbell text-2xl text-burnt-orange mb-2"></i>
+            <div class="text-white font-bold">10 Workouts</div>
+            <div class="text-gray-400 text-sm">Progressive Training</div>
           </div>
           <div>
-            <i class="fas fa-star text-2xl text-burnt-orange mb-2"></i>
-            <div class="text-white font-bold">★★★☆☆</div>
-            <div class="text-gray-400 text-sm">Difficulty</div>
+            <i class="fas fa-heart text-2xl text-burnt-orange mb-2"></i>
+            <div class="text-white font-bold">4 Rest Days</div>
+            <div class="text-gray-400 text-sm">Strategic Recovery</div>
+          </div>
+          <div>
+            <i class="fas fa-email text-2xl text-burnt-orange mb-2"></i>
+            <div class="text-white font-bold">Auto Delivery</div>
+            <div class="text-gray-400 text-sm">Daily to Your Inbox</div>
+          </div>
+        </div>
+        <div class="bg-black/20 rounded-lg p-4">
+          <h4 class="text-white font-bold mb-3">🎯 Personalized to Your Goals:</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div>✓ ${this.userData.experience_level || 'Intermediate'} level exercises</div>
+            <div>✓ ${this.userData.workout_duration || '30-45'} minute sessions</div>
+            <div>✓ ${this.userData.primary_goal ? this.userData.primary_goal.replace('_', ' ') : 'Strength & conditioning'} focused</div>
+            <div>✓ Equipment: ${this.userData.equipment || 'Bodyweight & basic gear'}</div>
           </div>
         </div>
       </div>
@@ -412,13 +460,17 @@ class FitnessAssessment {
       </div>
       
       <div class="bg-gradient-to-r from-green-900/50 to-emerald-900/50 rounded-lg p-6 mb-8">
-        <h4 class="text-xl font-bold text-white mb-3"><i class="fas fa-gift text-green-400 mr-2"></i>Your FREE 14-Day Program Includes:</h4>
+        <h4 class="text-xl font-bold text-white mb-3"><i class="fas fa-gift text-green-400 mr-2"></i>Your AI-Powered 14-Day Program Includes:</h4>
         <ul class="text-gray-300 space-y-2">
-          <li><i class="fas fa-check text-green-400 mr-2"></i>14 progressive workout plans</li>
-          <li><i class="fas fa-check text-green-400 mr-2"></i>Detailed exercise instructions & videos</li>
-          <li><i class="fas fa-check text-green-400 mr-2"></i>Nutrition guidance from military nutrition experts</li>
-          <li><i class="fas fa-check text-green-400 mr-2"></i>Progress tracking tools</li>
-          <li><i class="fas fa-check text-green-400 mr-2"></i>Direct access to Kyle (Kai) for questions</li>
+          <li><i class="fas fa-check text-green-400 mr-2"></i>10 personalized workout plans (based on YOUR assessment)</li>
+          <li><i class="fas fa-check text-green-400 mr-2"></i>4 strategic rest days with recovery activities</li>
+          <li><i class="fas fa-check text-green-400 mr-2"></i>Automated daily email delivery (6 AM sharp!)</li>
+          <li><i class="fas fa-check text-green-400 mr-2"></i>Progressive difficulty based on your experience level</li>
+          <li><i class="fas fa-check text-green-400 mr-2"></i>Equipment-specific exercises (no wasted time)</li>
+          <li><i class="fas fa-check text-green-400 mr-2"></i>Injury-safe modifications and alternatives</li>
+          <li><i class="fas fa-check text-green-400 mr-2"></i>Military-grade nutrition guidance</li>
+          <li><i class="fas fa-check text-green-400 mr-2"></i>Personal check-in from Kyle after Day 3</li>
+          <li><i class="fas fa-check text-green-400 mr-2"></i>Private military fitness community access</li>
         </ul>
       </div>
       
