@@ -380,13 +380,405 @@ class FitnessAssessment {
       if (response.data.success) {
         // Add fitness profile to userData
         this.userData.fitness_profile = data;
-        // Skip equipment and injuries for now (use defaults)
-        this.startProgramGeneration();
+        this.currentPhase = 3;
+        this.renderPhase3();
       } else {
         this.showError('Failed to save fitness profile. Please try again.');
       }
     } catch (error) {
       console.error('Phase 2 API Error:', error);
+      this.showError('Connection error. Please check your internet and try again.');
+    } finally {
+      button.innerHTML = originalText;
+      button.disabled = false;
+    }
+  }
+  
+  // =======================================================================
+  // PHASE 3: Training Environment & Equipment Selection
+  // =======================================================================
+  
+  renderPhase3() {
+    this.content.innerHTML = `
+      <div class="text-center mb-8">
+        <div class="flex justify-center items-center mb-4">
+          <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold mr-2">✓</div>
+          <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold mr-2">✓</div>
+          <div class="w-8 h-8 bg-burnt-orange rounded-full flex items-center justify-center text-white font-bold mr-2">3</div>
+          <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold">4</div>
+        </div>
+        <h2 class="text-3xl font-bold text-white mb-2">Let's Dial In Your Training Environment</h2>
+        <p class="text-gray-400">The right tools make all the difference - let's see what we're working with</p>
+      </div>
+      
+      <form id="phase3-form" class="space-y-8">
+        <div>
+          <label class="block text-white font-semibold mb-4">
+            <i class="fas fa-location-arrow mr-2 text-burnt-orange"></i>Where will you primarily train?
+          </label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <label class="cursor-pointer">
+              <input type="radio" name="training_location" value="gym" class="sr-only" onchange="assessment.toggleEquipmentSection('gym')">
+              <div class="p-6 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
+                <div class="text-center">
+                  <i class="fas fa-dumbbell text-3xl text-burnt-orange mb-3"></i>
+                  <div class="font-bold text-white mb-2">Full Gym Access</div>
+                  <div class="text-sm text-gray-400">Complete equipment and space - let's unleash your potential</div>
+                </div>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="training_location" value="home" class="sr-only" onchange="assessment.toggleEquipmentSection('home')">
+              <div class="p-6 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
+                <div class="text-center">
+                  <i class="fas fa-home text-3xl text-burnt-orange mb-3"></i>
+                  <div class="font-bold text-white mb-2">Home Training</div>
+                  <div class="text-sm text-gray-400">Your personal space - we'll make it work perfectly</div>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+        
+        <div id="equipment-section" class="hidden">
+          <div class="bg-charcoal/50 rounded-lg p-6 border border-burnt-orange/20">
+            <label class="block text-white font-semibold mb-4">
+              <i class="fas fa-tools mr-2 text-burnt-orange"></i>What equipment do you have access to?
+            </label>
+            <p class="text-gray-400 text-sm mb-4">Check all that apply - don't worry if you only have a few items, we'll design around what you've got</p>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <label class="cursor-pointer">
+                <input type="checkbox" name="equipment" value="dumbbells" class="sr-only">
+                <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors checkbox-option text-center">
+                  <i class="fas fa-dumbbell text-2xl text-burnt-orange mb-2"></i>
+                  <div class="text-white font-medium">Dumbbells</div>
+                </div>
+              </label>
+              
+              <label class="cursor-pointer">
+                <input type="checkbox" name="equipment" value="kettlebells" class="sr-only">
+                <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors checkbox-option text-center">
+                  <i class="fas fa-weight-hanging text-2xl text-burnt-orange mb-2"></i>
+                  <div class="text-white font-medium">Kettlebells</div>
+                </div>
+              </label>
+              
+              <label class="cursor-pointer">
+                <input type="checkbox" name="equipment" value="barbells" class="sr-only">
+                <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors checkbox-option text-center">
+                  <i class="fas fa-minus text-2xl text-burnt-orange mb-2"></i>
+                  <div class="text-white font-medium">Barbells</div>
+                </div>
+              </label>
+              
+              <label class="cursor-pointer">
+                <input type="checkbox" name="equipment" value="squat_rack" class="sr-only">
+                <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors checkbox-option text-center">
+                  <i class="fas fa-square text-2xl text-burnt-orange mb-2"></i>
+                  <div class="text-white font-medium">Squat Rack</div>
+                </div>
+              </label>
+              
+              <label class="cursor-pointer">
+                <input type="checkbox" name="equipment" value="workout_bench" class="sr-only">
+                <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors checkbox-option text-center">
+                  <i class="fas fa-couch text-2xl text-burnt-orange mb-2"></i>
+                  <div class="text-white font-medium">Workout Bench</div>
+                </div>
+              </label>
+              
+              <label class="cursor-pointer">
+                <input type="checkbox" name="equipment" value="resistance_bands" class="sr-only">
+                <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors checkbox-option text-center">
+                  <i class="fas fa-link text-2xl text-burnt-orange mb-2"></i>
+                  <div class="text-white font-medium">Resistance Bands</div>
+                </div>
+              </label>
+              
+              <label class="cursor-pointer">
+                <input type="checkbox" name="equipment" value="trx_suspension" class="sr-only">
+                <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors checkbox-option text-center">
+                  <i class="fas fa-anchor text-2xl text-burnt-orange mb-2"></i>
+                  <div class="text-white font-medium">TRX/Suspension</div>
+                </div>
+              </label>
+              
+              <label class="cursor-pointer">
+                <input type="checkbox" name="equipment" value="bodyweight_only" class="sr-only">
+                <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors checkbox-option text-center">
+                  <i class="fas fa-user text-2xl text-burnt-orange mb-2"></i>
+                  <div class="text-white font-medium">None (Bodyweight)</div>
+                </div>
+              </label>
+            </div>
+            
+            <div class="mt-4 p-3 bg-burnt-orange/10 rounded-lg border border-burnt-orange/30">
+              <p class="text-sm text-gray-300">
+                <i class="fas fa-lightbulb text-burnt-orange mr-2"></i>
+                <strong>Pro Tip:</strong> Even with minimal equipment, we can create incredible transformations. Some of my most effective programs use just bodyweight and bands.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex justify-between pt-6">
+          <button type="button" onclick="assessment.renderPhase2()" 
+                  class="px-6 py-3 text-gray-400 hover:text-white transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>Back
+          </button>
+          <button type="submit" 
+                  class="bg-burnt-orange hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105">
+            Continue <i class="fas fa-arrow-right ml-2"></i>
+          </button>
+        </div>
+      </form>
+    `;
+    
+    this.setupRadioButtons();
+    this.setupCheckboxes();
+    
+    // Handle form submission
+    document.getElementById('phase3-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handlePhase3Submit(e.target);
+    });
+  }
+  
+  // Toggle equipment section based on training location
+  toggleEquipmentSection(location) {
+    const equipmentSection = document.getElementById('equipment-section');
+    if (location === 'home') {
+      equipmentSection.classList.remove('hidden');
+    } else {
+      equipmentSection.classList.add('hidden');
+    }
+  }
+  
+  // Handle Phase 3 form submission
+  async handlePhase3Submit(form) {
+    const formData = new FormData(form);
+    const trainingLocation = formData.get('training_location');
+    
+    if (!trainingLocation) {
+      this.showError('Please select where you\'ll be training');
+      return;
+    }
+    
+    let equipment = [];
+    
+    if (trainingLocation === 'gym') {
+      // Gym users get access to all equipment
+      equipment = ['dumbbells', 'barbells', 'kettlebells', 'squat_rack', 'workout_bench', 'cable_machine', 'pull_up_bar'];
+    } else {
+      // Home users: get selected equipment
+      equipment = formData.getAll('equipment');
+      if (equipment.length === 0) {
+        this.showError('Please select at least one equipment option, or choose "None (Bodyweight)"');
+        return;
+      }
+    }
+    
+    const button = form.querySelector('button[type="submit"]');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving Setup...';
+    button.disabled = true;
+    
+    try {
+      const response = await axios.post(`/api/users/${this.userData.user_id}/equipment`, {
+        equipment: equipment
+      });
+      
+      if (response.data.success) {
+        this.userData.equipment = equipment;
+        this.userData.training_location = trainingLocation;
+        this.currentPhase = 4;
+        this.renderPhase4();
+      } else {
+        this.showError('Failed to save equipment setup. Please try again.');
+      }
+    } catch (error) {
+      console.error('Phase 3 API Error:', error);
+      this.showError('Connection error. Please check your internet and try again.');
+    } finally {
+      button.innerHTML = originalText;
+      button.disabled = false;
+    }
+  }
+  
+  // =======================================================================
+  // PHASE 4: Injury Considerations with Dr. U Tone
+  // =======================================================================
+  
+  renderPhase4() {
+    this.content.innerHTML = `
+      <div class="text-center mb-8">
+        <div class="flex justify-center items-center mb-4">
+          <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold mr-2">✓</div>
+          <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold mr-2">✓</div>
+          <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold mr-2">✓</div>
+          <div class="w-8 h-8 bg-burnt-orange rounded-full flex items-center justify-center text-white font-bold">4</div>
+        </div>
+        <h2 class="text-3xl font-bold text-white mb-2">Let's Keep You Safe & Strong</h2>
+        <p class="text-gray-400">Any injury considerations? Don't worry - we'll work around anything</p>
+      </div>
+      
+      <form id="phase4-form" class="space-y-8">
+        <div class="bg-charcoal/50 rounded-lg p-6 border border-burnt-orange/20">
+          <label class="block text-white font-semibold mb-4">
+            <i class="fas fa-shield-alt mr-2 text-burnt-orange"></i>Any current or past injuries we should be mindful of?
+          </label>
+          
+          <div class="mb-6">
+            <label class="cursor-pointer flex items-start">
+              <input type="radio" name="has_injuries" value="none" class="sr-only" onchange="assessment.toggleInjuryDetails('none')">
+              <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option w-full">
+                <div class="flex items-center">
+                  <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                  <div>
+                    <div class="font-bold text-white">No injuries or limitations</div>
+                    <div class="text-sm text-gray-400">Ready to train without restrictions</div>
+                  </div>
+                </div>
+              </div>
+            </label>
+          </div>
+          
+          <div class="mb-6">
+            <label class="cursor-pointer flex items-start">
+              <input type="radio" name="has_injuries" value="minor" class="sr-only" onchange="assessment.toggleInjuryDetails('minor')">
+              <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option w-full">
+                <div class="flex items-center">
+                  <i class="fas fa-exclamation-triangle text-yellow-500 mr-3"></i>
+                  <div>
+                    <div class="font-bold text-white">Minor considerations</div>
+                    <div class="text-sm text-gray-400">Some things to be mindful of, but nothing major</div>
+                  </div>
+                </div>
+              </div>
+            </label>
+          </div>
+          
+          <div class="mb-6">
+            <label class="cursor-pointer flex items-start">
+              <input type="radio" name="has_injuries" value="significant" class="sr-only" onchange="assessment.toggleInjuryDetails('significant')">
+              <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option w-full">
+                <div class="flex items-center">
+                  <i class="fas fa-band-aid text-red-500 mr-3"></i>
+                  <div>
+                    <div class="font-bold text-white">Significant injury history</div>
+                    <div class="text-sm text-gray-400">Let's work smart around any limitations</div>
+                  </div>
+                </div>
+              </div>
+            </label>
+          </div>
+          
+          <div id="injury-details" class="hidden mt-6">
+            <label class="block text-white font-medium mb-3">
+              Brief description of injuries or areas of concern:
+            </label>
+            <textarea name="injury_details" 
+                      class="w-full p-4 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-burnt-orange focus:outline-none transition-colors"
+                      rows="3"
+                      placeholder="e.g., 'Previous knee surgery on left leg, occasional lower back stiffness...'"></textarea>
+            
+            <div class="mt-4 p-4 bg-blue-900/20 rounded-lg border border-blue-500/30">
+              <p class="text-sm text-gray-300">
+                <i class="fas fa-user-md text-blue-400 mr-2"></i>
+                <strong>My approach:</strong> I've worked with everyone from elite athletes to people recovering from major surgeries. 
+                We'll modify movements intelligently while still challenging you appropriately. Your limitations don't define your potential.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-burnt-orange/10 rounded-lg p-6 border border-burnt-orange/30">
+          <h4 class="text-white font-bold mb-3">
+            <i class="fas fa-heart text-burnt-orange mr-2"></i>My Philosophy on Training with Injuries
+          </h4>
+          <div class="space-y-3 text-sm text-gray-300">
+            <p>After my own career-ending injury as an Airborne Ranger, I learned that our bodies are incredibly adaptable. The key is working <em>with</em> your body, not against it.</p>
+            <p>We'll use modifications as opportunities to discover new movement patterns and build resilience in different ways. Sometimes our greatest limitations become our greatest teachers.</p>
+            <p><strong>Remember:</strong> This is just for awareness - I'm not tiptoeing around anything. We're going to train smart and train hard.</p>
+          </div>
+        </div>
+        
+        <div class="flex justify-between pt-6">
+          <button type="button" onclick="assessment.renderPhase3()" 
+                  class="px-6 py-3 text-gray-400 hover:text-white transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>Back
+          </button>
+          <button type="submit" 
+                  class="bg-gradient-to-r from-burnt-orange to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+            Generate My Program! <i class="fas fa-magic ml-2"></i>
+          </button>
+        </div>
+      </form>
+    `;
+    
+    this.setupRadioButtons();
+    
+    // Handle form submission
+    document.getElementById('phase4-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handlePhase4Submit(e.target);
+    });
+  }
+  
+  // Toggle injury details section
+  toggleInjuryDetails(injuryLevel) {
+    const detailsSection = document.getElementById('injury-details');
+    if (injuryLevel === 'minor' || injuryLevel === 'significant') {
+      detailsSection.classList.remove('hidden');
+    } else {
+      detailsSection.classList.add('hidden');
+    }
+  }
+  
+  // Handle Phase 4 form submission
+  async handlePhase4Submit(form) {
+    const formData = new FormData(form);
+    const hasInjuries = formData.get('has_injuries');
+    
+    if (!hasInjuries) {
+      this.showError('Please let us know about any injury considerations');
+      return;
+    }
+    
+    let injuries = [];
+    if (hasInjuries !== 'none') {
+      const injuryDetails = formData.get('injury_details') || '';
+      if (hasInjuries !== 'none' && !injuryDetails.trim()) {
+        this.showError('Please provide a brief description of your injuries or concerns');
+        return;
+      }
+      
+      injuries = [{
+        severity: hasInjuries,
+        description: injuryDetails.trim(),
+        injury_type: 'general' // We'll keep it simple for now
+      }];
+    }
+    
+    const button = form.querySelector('button[type="submit"]');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Finalizing Profile...';
+    button.disabled = true;
+    
+    try {
+      const response = await axios.post(`/api/users/${this.userData.user_id}/injuries`, {
+        injuries: injuries
+      });
+      
+      if (response.data.success) {
+        this.userData.injuries = injuries;
+        this.startProgramGeneration();
+      } else {
+        this.showError('Failed to save injury information. Please try again.');
+      }
+    } catch (error) {
+      console.error('Phase 4 API Error:', error);
       this.showError('Connection error. Please check your internet and try again.');
     } finally {
       button.innerHTML = originalText;
@@ -427,16 +819,8 @@ class FitnessAssessment {
     this.animateProgress();
     
     try {
-      // Add default equipment and injuries for simplicity
-      await axios.post(`/api/users/${this.userData.user_id}/equipment`, {
-        equipment: ['bodyweight', 'resistance_bands', 'dumbbells'] // Default equipment
-      });
-      
-      await axios.post(`/api/users/${this.userData.user_id}/injuries`, {
-        injuries: [] // No injuries by default
-      });
-      
       // Generate full 14-day program with email delivery
+      // (Equipment and injuries already saved in previous phases)
       const response = await axios.post(`/api/users/${this.userData.user_id}/generate-program`);
       
       if (response.data.success) {
@@ -615,6 +999,21 @@ class FitnessAssessment {
         if (radio.checked) {
           radio.closest('label').querySelector('.radio-option').classList.add('selected', 'border-burnt-orange');
           radio.closest('label').querySelector('.radio-option').classList.remove('border-gray-600');
+        }
+      });
+    });
+  }
+  
+  setupCheckboxes() {
+    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+        const option = checkbox.closest('label').querySelector('.checkbox-option');
+        if (checkbox.checked) {
+          option.classList.add('selected', 'border-burnt-orange');
+          option.classList.remove('border-gray-600');
+        } else {
+          option.classList.remove('selected', 'border-burnt-orange');
+          option.classList.add('border-gray-600');
         }
       });
     });
