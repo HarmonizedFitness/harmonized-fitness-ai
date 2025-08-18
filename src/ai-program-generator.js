@@ -44,32 +44,32 @@ export class ProgramGenerator {
     return program;
   }
 
-  // Generate program overview based on user goals
+  // Generate program overview based on user goals - Dr. U's authentic voice
   generateProgramOverview(fitnessProfile) {
     const goalDescriptions = {
-      weight_loss: "High-intensity fat-burning program designed to maximize calorie burn while preserving lean muscle mass.",
-      muscle_building: "Progressive resistance training focused on hypertrophy and strength development across all major muscle groups.",
-      strength_power: "Military-style strength and power development using functional movements and compound exercises.",
-      military_tactical: "Combat-ready conditioning program emphasizing functional fitness, endurance, and mental toughness.",
-      glute_enhancement: "Targeted lower body development with emphasis on glute activation, strength, and aesthetic enhancement.",
-      next_level_performance: "Elite-level training protocol designed for advanced athletes seeking peak performance optimization."
+      weight_loss: "Let's strip away what's not serving you and reveal the strength that's been there all along. This isn't about punishment - it's about finding harmony between effort and recovery while your body transforms from the inside out.",
+      muscle_building: "Time to build more than muscle - we're building confidence, resilience, and that unshakeable strength that comes from mastering the little things. Every rep is a conversation with your potential.",
+      strength_power: "Drawing from my military background, we'll develop functional power that translates to real life. This isn't gym strength - this is the kind of strength that serves you when it matters most.",
+      military_prep: "Hooah! Let's tap into that warrior spirit and build combat-ready fitness. Mental toughness isn't just trained - it's forged through consistent action and pushing past what you thought possible.",
+      glute_enhancement: "Strong glutes are the foundation of everything - power, stability, confidence. We're not just building a better backside; we're creating a stronger, more balanced you from the ground up.",
+      level_up: "You feel stuck, but you're not. You're ready for the details that separate good from extraordinary. We're diving deep into pulse reps, grip variations, lengthened positions, and those 'little things' that unlock breakthrough performance."
     };
 
     const durationDescriptions = {
-      "15-30": "Time-efficient, high-intensity sessions perfect for busy schedules.",
-      "30-45": "Balanced workout duration allowing for comprehensive training with adequate recovery.",
-      "45-60": "Extended sessions for thorough muscle development and skill refinement.",
-      "60+": "In-depth training sessions for maximum adaptation and performance gains."
+      "15-30": "Short and sweet doesn't mean easy. We're maximizing every minute because I know your time is precious. Quality over quantity, always.",
+      "30-45": "The sweet spot for most of us. Enough time to warm up properly, work hard, and cool down mindfully. This is where consistency meets results.",
+      "45-60": "Now we're cooking! Extended sessions allow us to really dial in technique, explore different movement patterns, and build that deep, lasting strength.",
+      "60+": "You're all in, and I respect that. These longer sessions are where we separate the committed from the curious. Expect breakthroughs."
     };
 
     return {
       primary_goal: goalDescriptions[fitnessProfile.primary_goal],
       duration_focus: durationDescriptions[fitnessProfile.workout_duration],
-      experience_level: `Designed for ${fitnessProfile.experience_level} level practitioners`,
+      experience_level: `Designed specifically for where you are right now - ${fitnessProfile.experience_level} level. We meet you where you are, then take you where you want to go.`,
       workout_environment: fitnessProfile.workout_environment,
       total_workouts: 10,
       rest_days: 4,
-      progressive_overload: "Each week builds upon the previous with increased intensity and complexity"
+      progressive_overload: "Growth happens in the space between comfort and chaos. Each week, we're gently pushing that boundary while listening to what your body is telling us."
     };
   }
 
@@ -116,9 +116,9 @@ export class ProgramGenerator {
       weight_loss: ['full_body_hiit', 'cardio_strength', 'metabolic', 'full_body_circuit'],
       muscle_building: ['upper_body', 'lower_body', 'push', 'pull'],
       strength_power: ['compound_strength', 'power_development', 'functional_strength', 'core_stability'],
-      military_tactical: ['combat_conditioning', 'functional_fitness', 'endurance_strength', 'agility_power'],
+      military_prep: ['combat_conditioning', 'functional_fitness', 'endurance_strength', 'agility_power'],
       glute_enhancement: ['lower_body_focus', 'glute_activation', 'posterior_chain', 'functional_lower'],
-      next_level_performance: ['sport_specific', 'power_endurance', 'advanced_strength', 'performance_conditioning']
+      level_up: ['advanced_techniques', 'plateau_breaker', 'detail_mastery', 'performance_refinement']
     };
 
     const pattern = focusPatterns[primaryGoal];
@@ -191,6 +191,8 @@ export class ProgramGenerator {
         form_cues: exercise.form_cues,
         safety_tips: exercise.safety_tips,
         ...this.calculateSetsReps(exercise, fitnessProfile, progressionMultiplier),
+        dr_u_instructions: this.generateDrUInstructions(exercise, fitnessProfile),
+        form_focus: this.generateFormFocus(exercise.name, fitnessProfile.experience_level),
         estimated_calories: Math.round(exercise.estimated_calories_per_minute * 3), // Assume 3 min per exercise
         difficulty_rating: exercise.difficulty_level,
         equipment_needed: exercise.equipment_required,
@@ -200,8 +202,9 @@ export class ProgramGenerator {
     return selectedExercises;
   }
 
-  // Calculate sets and reps based on user profile and progression
+  // Calculate sets and reps with Dr. U's philosophy - Listen to your body
   calculateSetsReps(exercise, fitnessProfile, progressionMultiplier) {
+    // Dr. U's sweet spot rep ranges - where the magic happens
     const baseReps = {
       beginner: { strength: 8, cardio: 20, flexibility: 30 },
       intermediate: { strength: 10, cardio: 25, flexibility: 45 },
@@ -229,19 +232,23 @@ export class ProgramGenerator {
       weight_loss: { reps: 1.2, sets: 1.1, rest: 30 },
       muscle_building: { reps: 1.0, sets: 1.2, rest: 60 },
       strength_power: { reps: 0.8, sets: 1.3, rest: 90 },
-      military_tactical: { reps: 1.1, sets: 1.1, rest: 45 },
+      military_prep: { reps: 1.1, sets: 1.1, rest: 45 },
       glute_enhancement: { reps: 1.1, sets: 1.0, rest: 45 },
-      next_level_performance: { reps: 1.3, sets: 1.2, rest: 75 }
+      level_up: { reps: 0.9, sets: 1.4, rest: 90 } // Lower reps, more sets for advanced techniques
     };
 
     const adjustment = goalAdjustments[fitnessProfile.primary_goal] || goalAdjustments.muscle_building;
 
+    const finalSets = Math.round(adjustedSets * adjustment.sets);
+    const finalReps = category === 'flexibility' ? `${adjustedReps} seconds` : Math.round(adjustedReps * adjustment.reps);
+    
     return {
-      sets: Math.round(adjustedSets * adjustment.sets),
-      reps: category === 'flexibility' ? `${adjustedReps} seconds` : Math.round(adjustedReps * adjustment.reps),
+      sets: finalSets,
+      reps: finalReps,
       rest_seconds: adjustment.rest,
-      tempo_notes: this.generateTempoNotes(fitnessProfile.primary_goal, category),
-      intensity_level: Math.ceil(progressionMultiplier * 5) // 1-5 scale
+      tempo_notes: this.generateDrUTempoNotes(fitnessProfile.primary_goal, category, finalReps),
+      intensity_level: Math.ceil(progressionMultiplier * 5), // 1-5 scale
+      coaching_cue: this.generateRepSpecificCue(finalSets, finalReps, exercise.name)
     };
   }
 
@@ -329,7 +336,8 @@ export class ProgramGenerator {
     return {
       duration_minutes: 5,
       exercises: warmupRoutines[workoutFocus] || warmupRoutines.full_body_hiit,
-      notes: "Prepare your body for the workout ahead. Focus on controlled movements and gradual intensity increase."
+      notes: "This isn't just preparation - it's meditation in motion. Feel each movement, notice what your body is telling you today. A proper warmup prevents injury and optimizes performance. Start slow, finish strong.",
+      dr_u_mindset: "Use these first few minutes to connect with your body and set your intention for today's training. What are you training FOR, not just WHAT are you training?"
     };
   }
 
@@ -348,7 +356,8 @@ export class ProgramGenerator {
     return {
       duration_minutes: 5,
       exercises: cooldownRoutines.default,
-      notes: "Allow your body to gradually return to resting state. Focus on deep breathing and gentle stretching."
+      notes: "This is sacred time. You just asked your body to do hard things, and it delivered. Honor that with intentional recovery. Breathe deeply, stretch mindfully, and acknowledge what you just accomplished.",
+      dr_u_reflection: "Take a moment to recognize that you showed up today. In a world that makes a thousand excuses, you chose action. That's not small - that's everything."
     };
   }
 
@@ -417,17 +426,20 @@ export class ProgramGenerator {
     return baseDifficulty * progressionMultiplier;
   }
 
-  generateTempoNotes(primaryGoal, category) {
+  generateDrUTempoNotes(primaryGoal, category, reps) {
     const tempos = {
-      weight_loss: "Fast, explosive movements with minimal rest",
-      muscle_building: "Controlled 2-1-2 tempo (2 sec down, 1 sec pause, 2 sec up)",
-      strength_power: "Explosive concentric, controlled eccentric", 
-      military_tactical: "Variable tempo based on tactical requirements",
-      glute_enhancement: "Slow, controlled with focus on muscle activation",
-      next_level_performance: "Sport-specific tempo patterns"
+      weight_loss: "Move with purpose - controlled descent, explosive up. That eccentric phase is where the magic happens for fat burning.",
+      muscle_building: "This is where we build strength from the inside out. 2 seconds down (feel that stretch), pause briefly, then power up. Your muscles are strongest when lengthening - use it!",
+      strength_power: "Explosive concentric, but CONTROL that eccentric. Power without control is just chaos. Master the descent, dominate the ascent.", 
+      military_prep: "Adapt your tempo to the mission. Sometimes slow and controlled, sometimes explosive. Train like your life depends on it.",
+      glute_enhancement: "Slow and deliberate - we're waking up those glutes! Feel every inch of the movement. Mind-muscle connection isn't just a phrase, it's your secret weapon.",
+      level_up: "Here's where we separate amateur from elite: 3-second eccentrics in lengthened position, 1-second pause, then explosive up. Try pulse reps at the bottom range - 5 pulses, then full rep. Switch your grip every set to hit different angles. That extra squeeze at the top? Hold it for 2 seconds. These details unlock breakthrough performance."
     };
 
-    return tempos[primaryGoal] || "Controlled movement with focus on form";
+    const baseNote = tempos[primaryGoal] || "Listen to your body and move with intention. Form first, intensity second.";
+    const repAdvice = reps >= 12 ? " Remember: those last 2-3 reps are where transformation lives." : " Quality over quantity - make every rep count.";
+    
+    return baseNote + repAdvice;
   }
 
   generateModifications(exercise, fitnessProfile) {
@@ -450,48 +462,78 @@ export class ProgramGenerator {
 
   generateCoachingNotes(day, fitnessProfile, workoutFocus) {
     const weeklyMessages = {
-      1: "Welcome to your transformation! Focus on learning proper form and listening to your body.",
-      2: "You're building momentum! Push yourself while maintaining excellent technique.",
-      8: "Week 2 begins - time to elevate your intensity and see what you're truly capable of!",
-      10: "Final week push! Your body is adapting and getting stronger every day."
+      1: "Here we go! Today is about showing up authentically and honoring where you are right now. Perfect form beats perfect reps every single time.",
+      2: "Yesterday you showed up. Today you show up again. This is how transformation actually happens - one choice at a time.",
+      3: "Your body is already adapting. Those little aches? That's growth knocking. Listen to what it's telling you.",
+      5: "We're building something bigger than just physical strength here. We're building the habit of keeping promises to yourself.",
+      6: "Almost at your first rest day! You've earned it through consistent action. Recovery is where the magic actually happens.",
+      8: "Week 2, here we go! Your body knows what's coming now. Time to play in that space between comfort and chaos.",
+      9: "The honeymoon phase is over. This is where we separate the committed from the curious. Which one are you?",
+      10: "Halfway point! Your future self is already thanking you for not giving up when it got uncomfortable.",
+      12: "The final push begins. Your body is capable of so much more than your mind believes. Prove it to yourself.",
+      13: "One more workout day. You've already proven you can do hard things. Now finish what you started."
     };
 
     const goalSpecificNotes = {
-      weight_loss: "Remember: consistency burns fat, intensity builds muscle. Stay hydrated!",
-      muscle_building: "Focus on progressive overload. Each rep should be challenging but controlled.",
-      strength_power: "Power comes from perfect technique. Master the movement, then add intensity.",
-      military_tactical: "Train like your mission depends on it. Mental toughness builds physical strength.",
-      glute_enhancement: "Mind-muscle connection is key. Feel every rep in your glutes.",
-      next_level_performance: "Elite performance requires elite effort. Leave nothing in reserve."
+      weight_loss: "Fat loss happens in the kitchen, strength happens in the gym, but transformation happens in your mind. Stay the course.",
+      muscle_building: "Every time you challenge a muscle, you're having a conversation with your potential. Make it a good conversation.",
+      strength_power: "True power isn't just about moving weight - it's about moving through life with confidence and capability.",
+      military_prep: "Embrace the suck. Channel that military discipline - you've been through harder than this. This is maintenance, not survival.",
+      glute_enhancement: "Strong glutes equal strong everything. We're building your foundation from the ground up. Feel that power.",
+      level_up: "Today we dive into the details that separate good from extraordinary. Focus on: 3-second eccentrics, 5 pulse reps in lengthened position, grip variations each set, 2-second pauses at peak contraction. These aren't just techniques - they're breakthrough protocols."
     };
 
+    const dailyWisdom = [
+      "Harmony comes from the inside out. Trust the process.",
+      "Small hinges swing big doors. Master the little things.",
+      "Your body is keeping score. Make sure it's a winning score.",
+      "Discomfort is temporary. Regret is forever. Choose wisely.",
+      "You're not just training muscles, you're training resilience.",
+      "Progress isn't linear. Show up anyway.",
+      "Your biggest competition is who you were yesterday.",
+      "Strength isn't just physical - it's mental, emotional, spiritual.",
+      "The magic happens when you keep going after you want to quit.",
+      "You're already stronger than you think. Now prove it.",
+      "Consistency beats perfection every single time.",
+      "Listen to your body - it's smarter than you think.",
+      "Every rep is a vote for the person you're becoming.",
+      "Champions are made in the moments no one is watching."
+    ];
+
     return {
-      weekly_message: weeklyMessages[day] || "Stay focused on your goals and trust the process.",
+      weekly_message: weeklyMessages[day] || "Trust your journey. Every step forward matters.",
       goal_specific: goalSpecificNotes[fitnessProfile.primary_goal],
-      daily_reminder: `Day ${day} - You're ${Math.round((day/14) * 100)}% complete with your transformation!`
+      daily_reminder: `Day ${day} - You're ${Math.round((day/14) * 100)}% complete with this program, but 100% committed to your transformation!`,
+      dr_u_wisdom: dailyWisdom[(day - 1) % dailyWisdom.length]
     };
   }
 
   generateRestDayCoaching(day, fitnessProfile) {
     const messages = {
-      4: "Recovery is where the magic happens. Your muscles are rebuilding stronger right now.",
-      7: "Week 1 complete! You've shown up for yourself every day. That's what champions do.",
-      11: "The final push is ahead. Use today to prepare mentally and physically for the home stretch.",
-      14: "You did it! You committed to 14 days and followed through. This is just the beginning."
+      4: "This is where the real work happens - not in the gym, but in the recovery. Your muscles are literally rebuilding themselves stronger right now. Honor this process.",
+      7: "Week 1 in the books! You showed up when you didn't feel like it, you pushed when it got uncomfortable, and you trusted the process. That's not just fitness - that's character.",
+      11: "Deep breath. The final push is coming, but today we prepare. Mental, physical, emotional preparation. Use this rest day to visualize finishing strong.",
+      14: "You did it! But more importantly, you proved to yourself that you can commit to something and follow through. This isn't the end - this is your new beginning. What's next?"
     };
 
-    return messages[day] || "Rest is not a reward for work done, it's a requirement for work to come.";
+    const baseMessage = messages[day] || "Rest isn't earned - it's required. Your body grows during recovery, not during training.";
+    const universalWisdom = " Remember: harmony comes from balancing effort with recovery. Today, choose recovery with the same intention you choose effort.";
+    
+    return baseMessage + universalWisdom;
   }
 
   generateRestDayNutrition(day) {
     const nutritionFocus = {
-      4: "Focus on anti-inflammatory foods: berries, leafy greens, fatty fish, and plenty of water.",
-      7: "Reflect on your nutrition wins this week. Plan healthy meals for the week ahead.",
-      11: "Prioritize protein today to support muscle recovery. Aim for 20-30g at each meal.",
-      14: "Celebrate with a nutritious meal that makes you feel energized and proud of your progress."
+      4: "Today, think anti-inflammatory: berries, leafy greens, fatty fish, and lots of water. Your body is rebuilding - give it premium fuel, not regular.",
+      7: "Pause and reflect on your nutrition wins this week. What worked? What didn't? Plan your meals for week 2 like you're planning for success, because you are.",
+      11: "Protein is your recovery ally today. Aim for 20-30g at each meal. Your muscles are hungry for the building blocks they need to come back stronger.",
+      14: "Celebrate with intention! Choose a meal that makes you feel energized and proud. You've earned this moment - make it count."
     };
 
-    return nutritionFocus[day] || "Listen to your hunger cues and nourish your body with whole foods.";
+    const baseGuidance = nutritionFocus[day] || "Listen to your hunger cues and nourish your body with whole foods.";
+    const drUWisdom = " Food is information for your body. What message are you sending today?";
+    
+    return baseGuidance + drUWisdom;
   }
 
   generateProgressionNotes(day, progressionMultiplier) {
@@ -502,49 +544,84 @@ export class ProgramGenerator {
     };
   }
 
+  generateDrUInstructions(exercise, fitnessProfile) {
+    const baseInstruction = exercise.instructions || "Perform this exercise with focus and control.";
+    const experienceModifier = {
+      beginner: "Take your time learning this movement. Perfect practice makes perfect - sloppy practice makes sloppy.",
+      intermediate: "You've got the basics down. Now let's refine the details that separate good from great.",
+      advanced: "Time to master the nuances. Feel for those subtle adjustments that maximize effectiveness.",
+      expert: "You know what you're doing. Trust your body, challenge your limits, and lead by example."
+    };
+    
+    return `${baseInstruction} ${experienceModifier[fitnessProfile.experience_level]} Remember: we're not just moving weight, we're building resilience.`;
+  }
+
+  generateFormFocus(exerciseName, experienceLevel) {
+    const formCues = {
+      beginner: "Foundation first - nail the basics before adding intensity. Your future self will thank you.",
+      intermediate: "Dial in those details. Small adjustments yield big results.",
+      advanced: "Feel the movement from the inside out. Your body knows more than you think.",
+      expert: "Make it look effortless while making it devastatingly effective."
+    };
+    
+    return `${formCues[experienceLevel]} Focus on playing in that tension zone where challenge meets control.`;
+  }
+
+  generateRepSpecificCue(sets, reps, exerciseName) {
+    const repCount = typeof reps === 'string' ? parseInt(reps) : reps;
+    
+    if (repCount <= 6) {
+      return "Low reps, high focus. Every single rep should look identical. This is where strength is forged.";
+    } else if (repCount <= 12) {
+      return "The sweet spot for most of us. Aim for 10-12 quality reps, but listen to your body - it knows when to push and when to pause.";
+    } else {
+      return "Higher reps mean playing in the tension zone longer. Embrace the discomfort - that's where transformation lives.";
+    }
+  }
+
   generateNutritionGuidance(fitnessProfile) {
     const nutritionPlans = {
       weight_loss: {
-        overview: "Caloric deficit with high protein, moderate carbs, and healthy fats",
-        daily_structure: "3 meals + 1 snack, focus on whole foods and portion control",
-        macro_targets: "Protein: 1g per lb bodyweight, Carbs: 0.8g per lb, Fat: 0.3g per lb",
-        timing: "Eat protein within 30 minutes post-workout",
-        hydration: "Half your bodyweight in ounces of water daily"
+        overview: "Food is fuel, not the enemy. We're creating a sustainable approach that honors your body's needs while achieving your goals.",
+        daily_structure: "3 solid meals + 1 smart snack. Quality over quantity, always. Eat like you give a damn about your future self.",
+        macro_targets: "Protein: 1g per lb (your muscle's best friend), Carbs: 0.8g per lb (strategic fuel), Fat: 0.3g per lb (hormonal harmony)",
+        timing: "Feed those muscles within 30 minutes post-workout. They're hungry for growth.",
+        hydration: "Half your bodyweight in ounces daily. Hydration is the foundation of everything else working properly."
       },
       muscle_building: {
-        overview: "Caloric surplus with emphasis on protein and nutrient timing",
-        daily_structure: "3 main meals + 2-3 snacks, never skip post-workout nutrition",
-        macro_targets: "Protein: 1.2g per lb bodyweight, Carbs: 1.5g per lb, Fat: 0.4g per lb", 
-        timing: "Protein and carbs within 45 minutes post-workout",
-        hydration: "Half your bodyweight in ounces + 16oz per hour of training"
+        overview: "Building muscle isn't just about lifting heavy - it's about feeding your potential. Every meal is an opportunity to support your goals.",
+        daily_structure: "3 main meals + 2-3 strategic snacks. Never leave your muscles guessing when the next fuel delivery is coming.",
+        macro_targets: "Protein: 1.2g per lb (non-negotiable), Carbs: 1.5g per lb (your energy foundation), Fat: 0.4g per lb (hormonal optimization)",
+        timing: "Protein and carbs within 45 minutes post-workout. This is when the magic happens.",
+        hydration: "Half your bodyweight in ounces + 16oz per hour of training. Your muscles are 70% water - honor that."
       },
       strength_power: {
-        overview: "Balanced nutrition supporting intense training and recovery",
-        daily_structure: "Strategic carb timing around workouts, consistent protein",
-        macro_targets: "Protein: 1g per lb bodyweight, Carbs: 1.2g per lb, Fat: 0.4g per lb",
-        timing: "Carbs 1-2 hours pre-workout, protein immediately post-workout",
-        hydration: "Consistent intake throughout day, extra during training sessions"
+        overview: "Power demands precision nutrition. Every meal should serve your strength goals with military efficiency.",
+        daily_structure: "Strategic carb timing around workouts, consistent protein delivery. Fuel like a tactician.",
+        macro_targets: "Protein: 1g per lb (strength foundation), Carbs: 1.2g per lb (power fuel), Fat: 0.4g per lb (recovery support)",
+        timing: "Carbs 1-2 hours pre-workout for sustained energy, protein immediately post for adaptation.",
+        hydration: "Consistent intake throughout the day. Dehydration kills performance before you even realize it."
       },
       military_tactical: {
-        overview: "Field-ready nutrition focusing on sustained energy and mental clarity",
-        daily_structure: "Consistent meal timing, portable nutrition options",
-        macro_targets: "Balanced macros with emphasis on sustained energy",
-        timing: "Never train on empty stomach, refuel within 60 minutes post-training",
-        hydration: "Aggressive hydration protocol - clear urine is the goal"
+        overview: "Field-ready nutrition that can adapt to any situation. Mental clarity and sustained energy are mission-critical.",
+        daily_structure: "Consistent meal timing when possible, portable options when necessary. Always be prepared.",
+        macro_targets: "Balanced macros with emphasis on sustained energy and mental clarity. Mission first.",
+        timing: "Never train on an empty stomach, refuel within 60 minutes post-training. Your body is your primary weapon.",
+        hydration: "Aggressive hydration protocol - clear urine is the goal. Dehydration compromises everything."
       },
       glute_enhancement: {
-        overview: "Muscle-building nutrition with foods supporting lower body development",
-        daily_structure: "Regular protein intake, complex carbs for energy",
-        macro_targets: "Higher protein focus with adequate carbs for training fuel",
-        timing: "Pre-workout carbs, post-workout protein for muscle synthesis",
-        hydration: "Optimal hydration supports muscle fullness and definition"
+        overview: "Strong glutes require strategic nutrition. We're building power from the ground up.",
+        daily_structure: "Regular protein intake with complex carbs for training fuel. Feed the foundation.",
+        macro_targets: "Higher protein focus with adequate carbs for intense lower body training.",
+        timing: "Pre-workout carbs for energy, post-workout protein for growth. Simple but effective.",
+        hydration: "Optimal hydration supports muscle fullness and definition. Water is your secret weapon."
       },
       next_level_performance: {
-        overview: "Precision nutrition for elite performance and recovery optimization",
-        daily_structure: "Periodized nutrition matching training phases",
-        macro_targets: "Customized based on training blocks and performance goals",
-        timing: "Strategic nutrient timing for performance and recovery",
-        hydration: "Performance-based hydration with electrolyte consideration"
+        overview: "Elite performance demands elite nutrition precision. Every choice either serves your goals or sabotages them.",
+        daily_structure: "Periodized nutrition that adapts to your training phases. Precision meets performance.",
+        macro_targets: "Customized based on your specific training blocks and performance demands.",
+        timing: "Strategic nutrient timing optimized for performance and recovery. Every detail matters.",
+        hydration: "Performance-based hydration with electrolyte optimization. Your edge might be in the details."
       }
     };
 

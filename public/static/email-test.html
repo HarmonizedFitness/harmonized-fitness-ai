@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SendGrid Email Test - Dr. U</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            line-height: 1.6; 
+            color: #333; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: #ffffff; 
+            border-radius: 15px; 
+            overflow: hidden; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header { 
+            background: linear-gradient(135deg, #CC5500 0%, #A04400 100%); 
+            color: white; 
+            padding: 40px 30px; 
+            text-align: center; 
+        }
+        .content { 
+            padding: 40px 30px; 
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: #CC5500;
+            outline: none;
+        }
+        .send-button { 
+            background: #CC5500; 
+            color: white; 
+            padding: 15px 30px; 
+            border: none;
+            border-radius: 8px; 
+            font-weight: bold; 
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.3s ease;
+        }
+        .send-button:hover {
+            background: #A04400;
+        }
+        .send-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📧 SendGrid Email Test</h1>
+            <p>Send Real Dr. U Emails to Your Inbox</p>
+        </div>
+        
+        <div class="content">
+            <div class="warning-box">
+                <strong>⚠️ Important:</strong> You'll need your SendGrid API key to test actual email delivery. 
+                <a href="https://app.sendgrid.com/settings/api_keys" target="_blank">Get your API key here</a>
+            </div>
+
+            <form id="emailTestForm">
+                <div class="form-group">
+                    <label for="email">Your Email Address</label>
+                    <input type="email" id="email" name="email" value="kyle.mccorm@gmail.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="day">Which Day Email to Send</label>
+                    <select id="day" name="day" required>
+                        <option value="1">Day 1 - Welcome & First Workout</option>
+                        <option value="3">Day 3 - Push Day (Shoulder-Safe)</option>
+                        <option value="7" selected>Day 7 - Week 1 Complete (Rest Day)</option>
+                        <option value="8">Day 8 - Week 2 Kickoff</option>
+                        <option value="14">Day 14 - Program Completion</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="apiKey">SendGrid API Key</label>
+                    <textarea id="apiKey" name="apiKey" rows="3" placeholder="Paste your SendGrid API key here (starts with SG.)" required></textarea>
+                    <small style="color: #666;">This is used only for this test and not stored anywhere.</small>
+                </div>
+
+                <button type="submit" class="send-button">
+                    📨 Send Test Email
+                </button>
+            </form>
+
+            <div id="result" class="result"></div>
+
+            <div class="info-box">
+                <h3>🎯 What You'll Receive:</h3>
+                <ul>
+                    <li><strong>Professional HTML Email</strong> - Full Dr. U branding and layout</li>
+                    <li><strong>Authentic Coaching Voice</strong> - Your "Harmony From Within" philosophy</li>
+                    <li><strong>Injury-Aware Content</strong> - Shoulder-safe exercises automatically selected</li>
+                    <li><strong>Personalized Details</strong> - Sarah's intermediate level, 45-60 min workouts</li>
+                    <li><strong>Mobile Responsive</strong> - Looks great on all devices</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <h3>🔧 Setting Up SendGrid:</h3>
+                <ol>
+                    <li>Go to <a href="https://app.sendgrid.com" target="_blank">SendGrid Dashboard</a></li>
+                    <li>Navigate to Settings → API Keys</li>
+                    <li>Create new API key with "Mail Send" permissions</li>
+                    <li>Copy the key (starts with "SG.") and paste above</li>
+                    <li>Verify your sender email: kyle@harmonizedfitness.com</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('emailTestForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const button = document.querySelector('.send-button');
+            const result = document.getElementById('result');
+            
+            // Show loading state
+            button.textContent = 'Sending Email...';
+            button.disabled = true;
+            result.style.display = 'none';
+            
+            try {
+                const formData = new FormData(e.target);
+                const data = {
+                    email: formData.get('email'),
+                    api_key: formData.get('apiKey')
+                };
+                
+                const day = formData.get('day');
+                
+                const response = await fetch(`/api/test-email/${day}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const responseData = await response.json();
+                
+                result.className = 'result ' + (responseData.success ? 'success' : 'error');
+                result.innerHTML = `
+                    <h4>${responseData.success ? '✅ Success!' : '❌ Error'}</h4>
+                    <p>${responseData.message}</p>
+                    ${responseData.email_id ? `<p><strong>Email ID:</strong> ${responseData.email_id}</p>` : ''}
+                    ${responseData.subject ? `<p><strong>Subject:</strong> ${responseData.subject}</p>` : ''}
+                `;
+                result.style.display = 'block';
+                
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `
+                    <h4>❌ Network Error</h4>
+                    <p>Failed to send email: ${error.message}</p>
+                `;
+                result.style.display = 'block';
+            }
+            
+            // Reset button
+            button.textContent = '📨 Send Test Email';
+            button.disabled = false;
+        });
+    </script>
+</body>
+</html>

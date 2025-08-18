@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS user_fitness_profiles (
   user_id INTEGER NOT NULL,
   experience_level TEXT NOT NULL CHECK(experience_level IN ('beginner', 'intermediate', 'advanced', 'expert')),
   workout_duration TEXT NOT NULL CHECK(workout_duration IN ('15-30', '30-45', '45-60', '60+')),
-  primary_goal TEXT NOT NULL CHECK(primary_goal IN ('weight_loss', 'muscle_building', 'strength_power', 'military_tactical', 'glute_enhancement', 'next_level_performance')),
+  primary_goal TEXT NOT NULL CHECK(primary_goal IN ('weight_loss', 'muscle_building', 'strength_power', 'military_prep', 'glute_enhancement', 'level_up')),
   workout_environment TEXT NOT NULL CHECK(workout_environment IN ('time_constrained', 'equipment_limited', 'gym_access', 'home_focused')),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,

@@ -223,33 +223,47 @@ class FitnessAssessment {
           <label class="block text-white font-semibold mb-4">
             <i class="fas fa-bullseye mr-2 text-burnt-orange"></i>What's your primary fitness goal?
           </label>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <label class="cursor-pointer">
               <input type="radio" name="primary_goal" value="weight_loss" class="sr-only">
               <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
-                <div class="font-bold text-white mb-1"><i class="fas fa-fire mr-2"></i>Weight Release & Energy</div>
+                <div class="font-bold text-white mb-1"><i class="fas fa-fire mr-2"></i>Weight Loss</div>
                 <div class="text-sm text-gray-400">Transform your relationship with your body</div>
               </div>
             </label>
             <label class="cursor-pointer">
               <input type="radio" name="primary_goal" value="muscle_building" class="sr-only">
               <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
-                <div class="font-bold text-white mb-1"><i class="fas fa-dumbbell mr-2"></i>Strength & Sculpting</div>
+                <div class="font-bold text-white mb-1"><i class="fas fa-dumbbell mr-2"></i>Muscle Building</div>
                 <div class="text-sm text-gray-400">Build power with intention and purpose</div>
               </div>
             </label>
             <label class="cursor-pointer">
               <input type="radio" name="primary_goal" value="strength_power" class="sr-only">
               <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
-                <div class="font-bold text-white mb-1"><i class="fas fa-bolt mr-2"></i>Peak Performance</div>
+                <div class="font-bold text-white mb-1"><i class="fas fa-bolt mr-2"></i>Strength/Power</div>
                 <div class="text-sm text-gray-400">Unlock your body's true potential</div>
               </div>
             </label>
             <label class="cursor-pointer">
-              <input type="radio" name="primary_goal" value="military_tactical" class="sr-only">
+              <input type="radio" name="primary_goal" value="military_prep" class="sr-only">
               <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
-                <div class="font-bold text-white mb-1"><i class="fas fa-shield-alt mr-2 text-army-green"></i>Tactical Readiness</div>
-                <div class="text-sm text-gray-400">Disciplined preparation meets mindful training</div>
+                <div class="font-bold text-white mb-1"><i class="fas fa-shield-alt mr-2 text-army-green"></i>Military Prep</div>
+                <div class="text-sm text-gray-400">Combat-ready fitness and mental toughness</div>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="primary_goal" value="glute_enhancement" class="sr-only">
+              <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
+                <div class="font-bold text-white mb-1"><i class="fas fa-heart mr-2"></i>Glute Enhancement</div>
+                <div class="text-sm text-gray-400">Build strength, power, and confidence from the foundation up</div>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="primary_goal" value="level_up" class="sr-only">
+              <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
+                <div class="font-bold text-white mb-1"><i class="fas fa-level-up-alt mr-2"></i>Level Up</div>
+                <div class="text-sm text-gray-400">Advanced techniques to break through plateaus</div>
               </div>
             </label>
           </div>
@@ -917,30 +931,6 @@ class FitnessAssessment {
           <li><i class="fas fa-users text-purple-500 mr-3"></i><strong>Community access</strong> - Join our private veteran fitness group</li>
         </ul>
       </div>
-              <div class="flex justify-between items-start">
-                <div class="flex-1">
-                  <h5 class="font-bold text-white mb-2">4. Plank Hold</h5>
-                  <p class="text-gray-400 text-sm mb-2">3 sets x 30-60 seconds</p>
-                  <div class="flex items-center text-sm text-gray-500">
-                    <span class="mr-4"><i class="fas fa-target mr-1"></i>Core Strength</span>
-                    <span><i class="fas fa-fire mr-1"></i>Moderate intensity</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div>
-          <h4 class="text-xl font-bold text-white mb-3"><i class="fas fa-heart text-burnt-orange mr-2"></i>Cool-down (5 minutes)</h4>
-          <div class="bg-charcoal rounded-lg p-4">
-            <ul class="text-gray-300 space-y-1">
-              <li>• Deep breathing exercises</li>
-              <li>• Downward Dog stretch</li>
-              <li>• Forward fold stretch</li>
-              <li>• Child's pose</li>
-            </ul>
-          </div>
         </div>
       </div>
       
@@ -1031,6 +1021,35 @@ class FitnessAssessment {
     setTimeout(() => {
       errorDiv.remove();
     }, 5000);
+  }
+
+  // Handle program claim button - close modal and show next steps
+  claimProgram() {
+    console.log('Claiming program - closing modal and showing next steps');
+    
+    // Close the modal
+    document.getElementById('program-modal').classList.add('hidden');
+    
+    // Show a success message or redirect to next step
+    const successMessage = document.createElement('div');
+    successMessage.className = 'fixed top-4 right-4 bg-green-600 text-white p-6 rounded-lg shadow-lg z-50 max-w-md';
+    successMessage.innerHTML = `
+      <div class="flex items-start">
+        <i class="fas fa-check-circle text-2xl mr-3 mt-1"></i>
+        <div>
+          <h4 class="font-bold mb-2">Program Claimed Successfully! 🎉</h4>
+          <p class="text-sm mb-3">Your personalized 14-day program has been activated and will be delivered to your email daily at 6 AM.</p>
+          <p class="text-xs">Check your email for Day 1 workout - it should arrive within the next few minutes!</p>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(successMessage);
+    
+    // Remove success message after 8 seconds
+    setTimeout(() => {
+      successMessage.remove();
+    }, 8000);
   }
 }
 

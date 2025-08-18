@@ -2,14 +2,15 @@
 // Handles automated email sequences and program delivery
 
 export class EmailAutomation {
-  constructor(emailService = 'resend') { // Default to Resend (Cloudflare-friendly)
+  constructor(emailService = 'sendgrid') { // Using SendGrid for email delivery
     this.emailService = emailService;
-    this.fromEmail = 'kyle@harmonizedfitness.com';
-    this.fromName = 'Kyle "Kai" - Harmonized Fitness';
+    this.fromEmail = 'support@harmonizedfitness.com';
+    this.fromName = 'Dr. U (Kyle) - Harmonized Fitness';
   }
 
   // Main function to start the 14-day email sequence
-  async startProgramDelivery(userProfile, program, emailAddress) {
+  async startProgramDelivery(userProfile, program, emailAddress, apiKey = null) {
+    this.apiKey = apiKey; // Store API key for use in email sending
     try {
       // Send immediate welcome email with Day 1
       await this.sendWelcomeEmail(userProfile, program, emailAddress);
@@ -420,16 +421,82 @@ Harmonized Fitness
     `;
   }
 
-  // Send email using configured service
-  async sendEmail(emailContent) {
-    // This would integrate with Resend, SendGrid, or Cloudflare Email Workers
-    // For now, we'll simulate the API call
-    console.log('Sending email:', emailContent.subject, 'to', emailContent.to);
-    
-    // In production, this would be:
-    // return await fetch('https://api.resend.com/emails', { ... })
-    
-    return { success: true, id: 'mock-email-id' };
+  // Send email using SendGrid API
+  async sendEmail(emailContent, apiKey = null) {
+    try {
+      console.log('Sending email via SendGrid:', emailContent.subject, 'to', emailContent.to);
+      
+      // Use provided API key or fallback to stored instance key
+      const sendGridApiKey = apiKey || this.apiKey;
+      
+      if (!sendGridApiKey) {
+        console.error('❌ No SendGrid API key provided');
+        return { success: false, error: 'SendGrid API key required' };
+      }
+      
+      const sendGridPayload = {
+        personalizations: [
+          {
+            to: [{ email: emailContent.to, name: emailContent.to_name || '' }],
+            subject: emailContent.subject
+          }
+        ],
+        from: {
+          email: emailContent.from.email || this.fromEmail,
+          name: emailContent.from.name || this.fromName
+        },
+        content: [
+          {
+            type: 'text/plain', 
+            value: emailContent.text || this.stripHtmlTags(emailContent.html)
+          },
+          {
+            type: 'text/html',
+            value: emailContent.html
+          }
+        ]
+      };
+
+      console.log('SendGrid payload from:', sendGridPayload.from.email);
+      console.log('SendGrid payload to:', sendGridPayload.personalizations[0].to[0].email);
+
+      const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${sendGridApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(sendGridPayload)
+      });
+
+      console.log('SendGrid response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('❌ SendGrid error:', response.status, errorData);
+        return { success: false, error: `SendGrid API error: ${response.status} - ${errorData}` };
+      }
+
+      const messageId = response.headers.get('X-Message-Id') || 'unknown';
+      console.log('✅ Email sent successfully via SendGrid, ID:', messageId);
+      
+      return { success: true, id: messageId };
+    } catch (error) {
+      console.error('❌ SendGrid integration error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Helper function to strip HTML tags for plain text version
+  stripHtmlTags(html) {
+    return html
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   // Schedule email for future delivery

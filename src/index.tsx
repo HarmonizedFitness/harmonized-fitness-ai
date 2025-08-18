@@ -44,7 +44,22 @@ app.post('/api/users', async (c) => {
       return c.json({ error: 'Invalid gender value' }, 400)
     }
     
-    // Insert user
+    // Check if user already exists
+    const existingUser = await c.env.DB.prepare(`
+      SELECT id as user_id FROM users WHERE email = ?
+    `).bind(email).first()
+    
+    if (existingUser) {
+      // User exists, return their ID for continued assessment
+      return c.json({ 
+        success: true, 
+        user_id: existingUser.user_id,
+        message: 'Welcome back! Continuing with your profile.',
+        existing_user: true
+      })
+    }
+    
+    // Insert new user
     const result = await c.env.DB.prepare(`
       INSERT INTO users (full_name, email, age, gender) 
       VALUES (?, ?, ?, ?)
@@ -80,7 +95,7 @@ app.post('/api/users/:id/fitness-profile', async (c) => {
     // Validation
     const validExperience = ['beginner', 'intermediate', 'advanced', 'expert']
     const validDuration = ['15-30', '30-45', '45-60', '60+']
-    const validGoals = ['weight_loss', 'muscle_building', 'strength_power', 'military_tactical', 'glute_enhancement', 'next_level_performance']
+    const validGoals = ['weight_loss', 'muscle_building', 'strength_power', 'military_prep', 'glute_enhancement', 'level_up']
     const validEnvironments = ['time_constrained', 'equipment_limited', 'gym_access', 'home_focused']
     
     if (!validExperience.includes(experience_level) || 
@@ -281,7 +296,8 @@ app.post('/api/users/:id/generate-program', async (c) => {
     const deliveryResult = await emailSystem.startProgramDelivery(
       profile, 
       { ...fullProgram, id: programId }, 
-      profile.user.email
+      profile.user.email,
+      c.env.SENDGRID_API_KEY // Pass the API key from Cloudflare environment
     )
     
     // Track funnel event
@@ -307,6 +323,139 @@ app.post('/api/users/:id/generate-program', async (c) => {
   } catch (error) {
     console.error('Error generating program:', error)
     return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Email preview endpoint for testing
+app.get('/api/users/:id/email-preview/:day', async (c) => {
+  try {
+    const userId = c.req.param('id')
+    const day = parseInt(c.req.param('day'))
+    
+    // Get complete user profile
+    const profileResponse = await fetch(`${c.req.url.replace(/\/api\/users\/\d+\/email-preview\/\d+$/, '')}/api/users/${userId}/profile`)
+    const profile = await profileResponse.json()
+    
+    if (!profile.user || !profile.fitness_profile) {
+      return c.json({ error: 'Complete profile required for email preview' }, 400)
+    }
+    
+    // Get all exercises from database
+    const exercisesResult = await c.env.DB.prepare('SELECT * FROM exercises WHERE is_active = 1').all()
+    const exercises = exercisesResult.results || []
+    
+    // Generate full 14-day program using AI
+    const { ProgramGenerator } = await import('./ai-program-generator.js')
+    const programGenerator = new ProgramGenerator()
+    const fullProgram = await programGenerator.generatePersonalized14DayProgram(profile, exercises)
+    
+    // Get the specific day's plan
+    const dayPlan = fullProgram.daily_plans[day]
+    if (!dayPlan) {
+      return c.json({ error: `Day ${day} not found` }, 404)
+    }
+    
+    // Generate email content using EmailAutomation
+    const { EmailAutomation } = await import('./email-automation.js')
+    const emailSystem = new EmailAutomation()
+    
+    let emailHTML
+    if (dayPlan.type === 'rest_day') {
+      emailHTML = emailSystem.generateRestDayEmailHTML(day, profile, dayPlan)
+    } else {
+      emailHTML = emailSystem.generateWorkoutEmailHTML(day, profile, dayPlan)
+    }
+    
+    // Return HTML for preview
+    return c.html(emailHTML)
+  } catch (error) {
+    console.error('Error generating email preview:', error)
+    return c.json({ error: `Internal server error: ${error.message}` }, 500)
+  }
+})
+
+// Send actual test email endpoint
+app.post('/api/test-email/:day', async (c) => {
+  try {
+    const day = parseInt(c.req.param('day'))
+    const { email, api_key } = await c.req.json()
+    
+    if (!email) {
+      return c.json({ error: 'Email address required' }, 400)
+    }
+    
+    if (!api_key) {
+      return c.json({ error: 'SendGrid API key required for testing' }, 400)
+    }
+    
+    // Set API key temporarily for this request
+    process.env.SENDGRID_API_KEY = api_key
+    
+    // Get Sarah's profile for testing (user 98)
+    const profileResponse = await fetch(`${c.req.url.replace(/\/api\/test-email\/\d+$/, '')}/api/users/98/profile`)
+    const profile = await profileResponse.json()
+    
+    if (!profile.user) {
+      return c.json({ error: 'Test user profile not found' }, 400)
+    }
+    
+    // Get all exercises from database
+    const exercisesResult = await c.env.DB.prepare('SELECT * FROM exercises WHERE is_active = 1').all()
+    const exercises = exercisesResult.results || []
+    
+    // Generate full 14-day program using AI
+    const { ProgramGenerator } = await import('./ai-program-generator.js')
+    const programGenerator = new ProgramGenerator()
+    const fullProgram = await programGenerator.generatePersonalized14DayProgram(profile, exercises)
+    
+    // Get the specific day's plan
+    const dayPlan = fullProgram.daily_plans[day]
+    if (!dayPlan) {
+      return c.json({ error: `Day ${day} not found` }, 404)
+    }
+    
+    // Generate and send email
+    const { EmailAutomation } = await import('./email-automation.js')
+    const emailSystem = new EmailAutomation()
+    
+    let emailHTML, emailText, subject
+    if (dayPlan.type === 'rest_day') {
+      emailHTML = emailSystem.generateRestDayEmailHTML(day, profile, dayPlan)
+      emailText = emailSystem.generateRestDayEmailText(day, profile, dayPlan)
+      subject = `🧘‍♂️ Day ${day}: Recovery & Reflection - Dr. U`
+    } else {
+      emailHTML = emailSystem.generateWorkoutEmailHTML(day, profile, dayPlan)
+      emailText = emailSystem.generateWorkoutEmailText(day, profile, dayPlan)  
+      subject = `💪 Day ${day}: ${dayPlan.workout_focus.replace('_', ' ').toUpperCase()} - Dr. U`
+    }
+    
+    const emailContent = {
+      to: email,
+      to_name: 'Kyle (Test Recipient)',
+      from: { 
+        email: 'support@harmonizedfitness.com', 
+        name: 'Dr. U (Kyle) - Harmonized Fitness' 
+      },
+      subject: subject,
+      html: emailHTML,
+      text: emailText
+    }
+    
+    const result = await emailSystem.sendEmail(emailContent)
+    
+    return c.json({
+      success: result.success,
+      message: result.success 
+        ? `Test email sent successfully to ${email}! Check your inbox.`
+        : `Failed to send email: ${result.error}`,
+      email_id: result.id,
+      day: day,
+      subject: subject
+    })
+    
+  } catch (error) {
+    console.error('Error sending test email:', error)
+    return c.json({ error: `Internal server error: ${error.message}` }, 500)
   }
 })
 
