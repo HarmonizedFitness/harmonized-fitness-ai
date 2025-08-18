@@ -530,12 +530,11 @@ app.get('/', (c) => {
                 <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
                   <span class="text-burnt-orange">FREE</span> 14-Day<br />
                   <span class="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                    AI-Powered Fitness
+                    Harmonized Training
                   </span>
                 </h1>
                 <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-                  Where ancient wisdom meets modern technology. Get your harmonized fitness plan designed for your unique journey.
-                  <span class="text-burnt-orange font-semibold">Mind, body, spirit - all included.</span>
+                  Balanced, customized, and human-led—enhanced by modern tools. Get a plan for your unique journey across mind, body, and spirit.
                 </p>
               </div>
               
