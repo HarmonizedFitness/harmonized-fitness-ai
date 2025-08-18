@@ -266,14 +266,10 @@ app.post('/api/users/:id/generate-program', async (c) => {
       return c.json({ error: 'Complete profile required for program generation' }, 400)
     }
     
-    // Get all exercises from database
-    const exercisesResult = await c.env.DB.prepare('SELECT * FROM exercises WHERE is_active = 1').all()
-    const exercises = exercisesResult.results || []
-    
-    // Generate full 14-day program using AI
+    // Generate full 14-day program using AI - NO DATABASE DEPENDENCY
     const { ProgramGenerator } = await import('./ai-program-generator.js')
     const programGenerator = new ProgramGenerator()
-    const fullProgram = await programGenerator.generatePersonalized14DayProgram(profile, exercises)
+    const fullProgram = await programGenerator.generatePersonalized14DayProgram(profile, [])
     
     // Save generated program
     const result = await c.env.DB.prepare(`
@@ -340,14 +336,10 @@ app.get('/api/users/:id/email-preview/:day', async (c) => {
       return c.json({ error: 'Complete profile required for email preview' }, 400)
     }
     
-    // Get all exercises from database
-    const exercisesResult = await c.env.DB.prepare('SELECT * FROM exercises WHERE is_active = 1').all()
-    const exercises = exercisesResult.results || []
-    
-    // Generate full 14-day program using AI
+    // Generate full 14-day program using AI - NO DATABASE DEPENDENCY
     const { ProgramGenerator } = await import('./ai-program-generator.js')
     const programGenerator = new ProgramGenerator()
-    const fullProgram = await programGenerator.generatePersonalized14DayProgram(profile, exercises)
+    const fullProgram = await programGenerator.generatePersonalized14DayProgram(profile, [])
     
     // Get the specific day's plan
     const dayPlan = fullProgram.daily_plans[day]
@@ -399,14 +391,10 @@ app.post('/api/test-email/:day', async (c) => {
       return c.json({ error: 'Test user profile not found' }, 400)
     }
     
-    // Get all exercises from database
-    const exercisesResult = await c.env.DB.prepare('SELECT * FROM exercises WHERE is_active = 1').all()
-    const exercises = exercisesResult.results || []
-    
-    // Generate full 14-day program using AI
+    // Generate full 14-day program using AI - NO DATABASE DEPENDENCY
     const { ProgramGenerator } = await import('./ai-program-generator.js')
     const programGenerator = new ProgramGenerator()
-    const fullProgram = await programGenerator.generatePersonalized14DayProgram(profile, exercises)
+    const fullProgram = await programGenerator.generatePersonalized14DayProgram(profile, [])
     
     // Get the specific day's plan
     const dayPlan = fullProgram.daily_plans[day]
