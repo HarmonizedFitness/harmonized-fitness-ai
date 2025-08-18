@@ -117,7 +117,7 @@ export class EmailAutomation {
         </div>
         
         <div class="content">
-          <h2>Mission Briefing, ${userProfile.full_name}!</h2>
+          <h2>Mission Briefing, ${userProfile.user.full_name}!</h2>
           
           <p>Outstanding! You've taken the first step toward your fitness transformation. As a former Army Ranger, I know what it takes to build both physical and mental strength, and I'm here to guide you every step of the way.</p>
           
@@ -346,7 +346,7 @@ export class EmailAutomation {
   // Text versions for email clients that don't support HTML
   generateWelcomeEmailText(userProfile, program, day1Workout) {
     return `
-Welcome to Harmonized Fitness, ${userProfile.full_name}!
+Welcome to Harmonized Fitness, ${userProfile.user.full_name}!
 
 Your Personalized 14-Day Military-Inspired Transformation Program
 
