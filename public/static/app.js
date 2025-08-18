@@ -131,8 +131,14 @@ class FitnessAssessment {
       return;
     }
     
-    // Demo mode - skip API call and proceed directly
-    // Store user data locally for demo purposes
+    // DEMO MODE: Skip API call and proceed directly
+    // When database is ready, replace this section with:
+    // try {
+    //   const response = await axios.post('/api/users', { full_name: data.full_name, email: data.email, age: parseInt(data.age), gender: data.gender });
+    //   if (response.data.success) { this.userData = { ...data, user_id: response.data.user_id }; this.currentPhase = 2; this.renderPhase2(); }
+    // } catch (error) { this.showError('Something went wrong. Please try again.'); }
+    
+    // For now: Store user data locally for demo purposes
     this.userData = { 
       ...data, 
       user_id: 'demo-' + Date.now(), // Generate a demo user ID
