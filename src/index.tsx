@@ -358,6 +358,8 @@ app.get('/', (c) => {
                 extend: {
                   colors: {
                     'burnt-orange': '#CC5500',
+                    'army-green': '#4A5D23',
+                    'charcoal': '#010101',
                     'deep-black': '#000000'
                   }
                 }
@@ -383,8 +385,8 @@ app.get('/', (c) => {
                   </span>
                 </h1>
                 <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-                  Military-tested fitness methods meet cutting-edge AI. Get your personalized workout plan in under 3 minutes.
-                  <span class="text-burnt-orange font-semibold">No gym required.</span>
+                  Where ancient wisdom meets modern technology. Get your harmonized fitness plan designed for your unique journey.
+                  <span class="text-burnt-orange font-semibold">Mind, body, spirit - all included.</span>
                 </p>
               </div>
               
@@ -402,18 +404,18 @@ app.get('/', (c) => {
               <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
                 <div class="text-center">
                   <i class="fas fa-brain text-3xl text-burnt-orange mb-4"></i>
-                  <h3 class="text-xl font-bold mb-2">AI-Powered Matching</h3>
-                  <p class="text-gray-400">Advanced algorithms create workouts tailored to your goals, experience, and equipment.</p>
+                  <h3 class="text-xl font-bold mb-2">Intelligent Personalization</h3>
+                  <p class="text-gray-400">Smart algorithms that understand your whole person - not just your fitness level.</p>
                 </div>
                 <div class="text-center">
                   <i class="fas fa-medal text-3xl text-burnt-orange mb-4"></i>
-                  <h3 class="text-xl font-bold mb-2">Military-Tested Methods</h3>
-                  <p class="text-gray-400">Proven techniques from Army Ranger training, adapted for all fitness levels.</p>
+                  <h3 class="text-xl font-bold mb-2">Battle-Tested Wisdom</h3>
+                  <p class="text-gray-400">Discipline forged through challenge, evolved through mindful practice and holistic understanding.</p>
                 </div>
                 <div class="text-center">
                   <i class="fas fa-home text-3xl text-burnt-orange mb-4"></i>
-                  <h3 class="text-xl font-bold mb-2">Anywhere, Anytime</h3>
-                  <p class="text-gray-400">Bodyweight exercises, home equipment options, or full gym routines - you choose.</p>
+                  <h3 class="text-xl font-bold mb-2">Your Space, Your Pace</h3>
+                  <p class="text-gray-400">From living room flows to gym sessions - we meet you exactly where you are.</p>
                 </div>
               </div>
             </div>
@@ -421,7 +423,7 @@ app.get('/', (c) => {
           
           {/* Assessment Modal */}
           <div id="assessment-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden z-50 flex items-center justify-center p-4">
-            <div class="bg-gray-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="bg-charcoal rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-burnt-orange/20">
               <div id="assessment-content" class="p-8">
                 {/* Dynamic content will be loaded here */}
               </div>

@@ -55,8 +55,8 @@ class FitnessAssessment {
           <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold mr-2">3</div>
           <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold">4</div>
         </div>
-        <h2 class="text-3xl font-bold text-white mb-2">Let's Get Started</h2>
-        <p class="text-gray-400">First, tell us a bit about yourself</p>
+        <h2 class="text-3xl font-bold text-white mb-2">Begin Your Journey</h2>
+        <p class="text-gray-400">Let's discover your unique path to harmony</p>
       </div>
       
       <form id="phase1-form" class="space-y-6">
@@ -65,7 +65,7 @@ class FitnessAssessment {
             <i class="fas fa-user mr-2 text-burnt-orange"></i>Full Name *
           </label>
           <input type="text" id="full_name" name="full_name" required 
-                 class="w-full p-4 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-burnt-orange focus:outline-none transition-colors">
+                 class="w-full p-4 bg-charcoal border border-gray-700 rounded-lg text-white focus:border-burnt-orange focus:outline-none transition-colors">
         </div>
         
         <div>
@@ -73,8 +73,8 @@ class FitnessAssessment {
             <i class="fas fa-envelope mr-2 text-burnt-orange"></i>Email Address *
           </label>
           <input type="email" id="email" name="email" required 
-                 class="w-full p-4 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-burnt-orange focus:outline-none transition-colors">
-          <p class="text-sm text-gray-400 mt-1">We'll send your personalized workout plan here</p>
+                 class="w-full p-4 bg-charcoal border border-gray-700 rounded-lg text-white focus:border-burnt-orange focus:outline-none transition-colors">
+          <p class="text-sm text-gray-400 mt-1">Your harmonized fitness plan will arrive here</p>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -83,7 +83,7 @@ class FitnessAssessment {
               <i class="fas fa-calendar mr-2 text-burnt-orange"></i>Age *
             </label>
             <input type="number" id="age" name="age" min="18" max="80" required 
-                   class="w-full p-4 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-burnt-orange focus:outline-none transition-colors">
+                   class="w-full p-4 bg-charcoal border border-gray-700 rounded-lg text-white focus:border-burnt-orange focus:outline-none transition-colors">
           </div>
           
           <div>
@@ -91,7 +91,7 @@ class FitnessAssessment {
               <i class="fas fa-venus-mars mr-2 text-burnt-orange"></i>Gender *
             </label>
             <select id="gender" name="gender" required 
-                    class="w-full p-4 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-burnt-orange focus:outline-none transition-colors">
+                    class="w-full p-4 bg-charcoal border border-gray-600 rounded-lg text-white focus:border-burnt-orange focus:outline-none transition-colors">
               <option value="">Select Gender</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
@@ -170,8 +170,8 @@ class FitnessAssessment {
           <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold mr-2">3</div>
           <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold">4</div>
         </div>
-        <h2 class="text-3xl font-bold text-white mb-2">Fitness Assessment</h2>
-        <p class="text-gray-400">Help us understand your current fitness level and goals</p>
+        <h2 class="text-3xl font-bold text-white mb-2">Your Fitness Story</h2>
+        <p class="text-gray-400">Share where you are so we can design where you're going</p>
       </div>
       
       <form id="phase2-form" class="space-y-8">
@@ -184,14 +184,14 @@ class FitnessAssessment {
               <input type="radio" name="experience_level" value="beginner" class="sr-only">
               <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
                 <div class="font-bold text-white mb-1">Beginner</div>
-                <div class="text-sm text-gray-400">New to fitness or returning after a break</div>
+                <div class="text-sm text-gray-400">Starting fresh or returning to movement</div>
               </div>
             </label>
             <label class="cursor-pointer">
               <input type="radio" name="experience_level" value="intermediate" class="sr-only">
               <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
                 <div class="font-bold text-white mb-1">Intermediate</div>
-                <div class="text-sm text-gray-400">Regular exercise for 6+ months</div>
+                <div class="text-sm text-gray-400">Consistent practice, ready to grow</div>
               </div>
             </label>
             <label class="cursor-pointer">
@@ -219,29 +219,29 @@ class FitnessAssessment {
             <label class="cursor-pointer">
               <input type="radio" name="primary_goal" value="weight_loss" class="sr-only">
               <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
-                <div class="font-bold text-white mb-1"><i class="fas fa-fire mr-2"></i>Weight Loss & Fat Burning</div>
-                <div class="text-sm text-gray-400">Burn calories and lean out</div>
+                <div class="font-bold text-white mb-1"><i class="fas fa-fire mr-2"></i>Weight Release & Energy</div>
+                <div class="text-sm text-gray-400">Transform your relationship with your body</div>
               </div>
             </label>
             <label class="cursor-pointer">
               <input type="radio" name="primary_goal" value="muscle_building" class="sr-only">
               <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
-                <div class="font-bold text-white mb-1"><i class="fas fa-dumbbell mr-2"></i>Muscle Building</div>
-                <div class="text-sm text-gray-400">Build lean muscle mass</div>
+                <div class="font-bold text-white mb-1"><i class="fas fa-dumbbell mr-2"></i>Strength & Sculpting</div>
+                <div class="text-sm text-gray-400">Build power with intention and purpose</div>
               </div>
             </label>
             <label class="cursor-pointer">
               <input type="radio" name="primary_goal" value="strength_power" class="sr-only">
               <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
-                <div class="font-bold text-white mb-1"><i class="fas fa-bolt mr-2"></i>Strength & Power</div>
-                <div class="text-sm text-gray-400">Increase functional strength</div>
+                <div class="font-bold text-white mb-1"><i class="fas fa-bolt mr-2"></i>Peak Performance</div>
+                <div class="text-sm text-gray-400">Unlock your body's true potential</div>
               </div>
             </label>
             <label class="cursor-pointer">
               <input type="radio" name="primary_goal" value="military_tactical" class="sr-only">
               <div class="p-4 border-2 border-gray-600 rounded-lg hover:border-burnt-orange transition-colors radio-option">
-                <div class="font-bold text-white mb-1"><i class="fas fa-medal mr-2"></i>Military/Tactical Prep</div>
-                <div class="text-sm text-gray-400">Combat-ready conditioning</div>
+                <div class="font-bold text-white mb-1"><i class="fas fa-shield-alt mr-2 text-army-green"></i>Tactical Readiness</div>
+                <div class="text-sm text-gray-400">Disciplined preparation meets mindful training</div>
               </div>
             </label>
           </div>
@@ -290,7 +290,7 @@ class FitnessAssessment {
           </div>
         </div>
         <div class="max-w-md mx-auto">
-          <div class="bg-gray-800 rounded-full h-2 mb-4">
+          <div class="bg-charcoal rounded-full h-2 mb-4">
             <div class="bg-burnt-orange h-2 rounded-full" id="progress-bar" style="width: 10%"></div>
           </div>
           <p class="text-sm text-gray-500" id="progress-text">Initializing AI program generator...</p>
@@ -379,7 +379,7 @@ class FitnessAssessment {
       <div class="space-y-6 mb-8">
         <div>
           <h4 class="text-xl font-bold text-white mb-3"><i class="fas fa-play text-burnt-orange mr-2"></i>Warm-up (5 minutes)</h4>
-          <div class="bg-gray-800 rounded-lg p-4">
+          <div class="bg-charcoal rounded-lg p-4">
             <ul class="text-gray-300 space-y-1">
               <li>• Jumping Jacks - 30 seconds</li>
               <li>• Bodyweight Squats - 30 seconds</li>
@@ -392,7 +392,7 @@ class FitnessAssessment {
         <div>
           <h4 class="text-xl font-bold text-white mb-3"><i class="fas fa-dumbbell text-burnt-orange mr-2"></i>Main Workout (20 minutes)</h4>
           <div class="space-y-3">
-            <div class="bg-gray-800 rounded-lg p-4">
+            <div class="bg-charcoal rounded-lg p-4">
               <div class="flex justify-between items-start">
                 <div class="flex-1">
                   <h5 class="font-bold text-white mb-2">1. Push-ups</h5>
@@ -405,7 +405,7 @@ class FitnessAssessment {
               </div>
             </div>
             
-            <div class="bg-gray-800 rounded-lg p-4">
+            <div class="bg-charcoal rounded-lg p-4">
               <div class="flex justify-between items-start">
                 <div class="flex-1">
                   <h5 class="font-bold text-white mb-2">2. Burpees</h5>
@@ -418,7 +418,7 @@ class FitnessAssessment {
               </div>
             </div>
             
-            <div class="bg-gray-800 rounded-lg p-4">
+            <div class="bg-charcoal rounded-lg p-4">
               <div class="flex justify-between items-start">
                 <div class="flex-1">
                   <h5 class="font-bold text-white mb-2">3. Mountain Climbers</h5>
@@ -431,7 +431,7 @@ class FitnessAssessment {
               </div>
             </div>
             
-            <div class="bg-gray-800 rounded-lg p-4">
+            <div class="bg-charcoal rounded-lg p-4">
               <div class="flex justify-between items-start">
                 <div class="flex-1">
                   <h5 class="font-bold text-white mb-2">4. Plank Hold</h5>
@@ -448,7 +448,7 @@ class FitnessAssessment {
         
         <div>
           <h4 class="text-xl font-bold text-white mb-3"><i class="fas fa-heart text-burnt-orange mr-2"></i>Cool-down (5 minutes)</h4>
-          <div class="bg-gray-800 rounded-lg p-4">
+          <div class="bg-charcoal rounded-lg p-4">
             <ul class="text-gray-300 space-y-1">
               <li>• Deep breathing exercises</li>
               <li>• Downward Dog stretch</li>
