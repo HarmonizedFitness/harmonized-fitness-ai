@@ -30,17 +30,39 @@ export class EmailAutomation {
 
   // Send immediate welcome email with Day 1 workout
   async sendWelcomeEmail(userProfile, program, emailAddress) {
-    const day1Workout = program.daily_plans[1];
-    
-    const emailContent = {
-      to: emailAddress,
-      from: { email: this.fromEmail, name: this.fromName },
-      subject: "🚀 Your Personalized 14-Day Harmonized Fitness Program is Here!",
-      html: this.generateWelcomeEmailHTML(userProfile, program, day1Workout),
-      text: this.generateWelcomeEmailText(userProfile, program, day1Workout)
-    };
+    try {
+      const day1Workout = program.daily_plans[1];
+      
+      if (!day1Workout) {
+        console.error('❌ Welcome email failed: Missing day1Workout in program.daily_plans');
+        return { success: false, error: 'Missing day 1 workout data' };
+      }
+      
+      console.log('📧 Generating welcome email for:', emailAddress);
+      console.log('📧 User:', userProfile.user?.full_name || 'Unknown');
+      console.log('📧 Goal:', userProfile.fitness_profile?.primary_goal || 'Unknown');
+      
+      const emailContent = {
+        to: emailAddress,
+        from: { email: this.fromEmail, name: this.fromName },
+        subject: "🚀 Your Personalized 14-Day Harmonized Fitness Program is Here!",
+        html: this.generateWelcomeEmailHTML(userProfile, program, day1Workout),
+        text: this.generateWelcomeEmailText(userProfile, program, day1Workout)
+      };
 
-    return await this.sendEmail(emailContent);
+      const result = await this.sendEmail(emailContent);
+      
+      if (result.success) {
+        console.log('✅ Welcome email sent successfully:', result.id);
+      } else {
+        console.error('❌ Welcome email failed:', result.error);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Welcome email exception:', error);
+      return { success: false, error: error.message };
+    }
   }
 
   // Schedule all program emails (Days 2-14)
