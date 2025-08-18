@@ -302,18 +302,20 @@ app.get('/', (c) => {
         <title>Free 14-Day Harmonizing Fitness | AI-Powered Personalized Workouts</title>
         <meta name="description" content="Get your FREE personalized 14-day fitness program powered by AI. Military-tested methods for all fitness levels. No gym required!" />
         <script src="https://cdn.tailwindcss.com"></script>
-        <script>
-          tailwind.config = {{
-            theme: {{
-              extend: {{
-                colors: {{
-                  'burnt-orange': '#CC5500',
-                  'deep-black': '#000000'
-                }}
-              }}
-            }}
-          }}
-        </script>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            tailwind.config = {
+              theme: {
+                extend: {
+                  colors: {
+                    'burnt-orange': '#CC5500',
+                    'deep-black': '#000000'
+                  }
+                }
+              }
+            }
+          `
+        }}></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet" />
         <link href="/static/style.css" rel="stylesheet" />
       </head>
