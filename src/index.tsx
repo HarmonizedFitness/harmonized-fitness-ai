@@ -1,12 +1,457 @@
 import { Hono } from 'hono'
+import { cors } from 'hono/cors'
+import { serveStatic } from 'hono/cloudflare-workers'
 import { renderer } from './renderer'
 
-const app = new Hono()
+// Type definitions for Cloudflare bindings
+type Bindings = {
+  DB: D1Database;
+  AI: any; // Cloudflare AI binding
+}
 
+const app = new Hono<{ Bindings: Bindings }>()
+
+// Enable CORS for API routes
+app.use('/api/*', cors({
+  origin: '*',
+  allowHeaders: ['Content-Type', 'Authorization'],
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+}))
+
+// Serve static files
+app.use('/static/*', serveStatic({ root: './public' }))
+
+// Use renderer for HTML pages
 app.use(renderer)
 
-app.get('/', (c) => {
-  return c.render(<h1>Hello!</h1>)
+// =============================================================================
+// API ROUTES - User Profile Collection (4-Phase Onboarding)
+// =============================================================================
+
+// Phase 1: Create user profile with basic info
+app.post('/api/users', async (c) => {
+  try {
+    const { full_name, email, age, gender } = await c.req.json()
+    
+    // Validation
+    if (!full_name || !email || !age || !gender) {
+      return c.json({ error: 'Missing required fields' }, 400)
+    }
+    if (age < 18 || age > 80) {
+      return c.json({ error: 'Age must be between 18 and 80' }, 400)
+    }
+    if (!['male', 'female', 'non_binary', 'prefer_not_to_say'].includes(gender)) {
+      return c.json({ error: 'Invalid gender value' }, 400)
+    }
+    
+    // Insert user
+    const result = await c.env.DB.prepare(`
+      INSERT INTO users (full_name, email, age, gender) 
+      VALUES (?, ?, ?, ?)
+    `).bind(full_name, email, age, gender).run()
+    
+    if (!result.success) {
+      return c.json({ error: 'Failed to create user' }, 500)
+    }
+    
+    // Track funnel event
+    await c.env.DB.prepare(`
+      INSERT INTO lead_funnel_events (user_id, event_type, event_data) 
+      VALUES (?, 'profile_created', ?)
+    `).bind(result.meta.last_row_id, JSON.stringify({ phase: 'basic_info' })).run()
+    
+    return c.json({ 
+      success: true, 
+      user_id: result.meta.last_row_id,
+      message: 'User profile created successfully'
+    })
+  } catch (error) {
+    console.error('Error creating user:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
 })
+
+// Phase 2: Add fitness assessment data
+app.post('/api/users/:id/fitness-profile', async (c) => {
+  try {
+    const userId = c.req.param('id')
+    const { experience_level, workout_duration, primary_goal, workout_environment } = await c.req.json()
+    
+    // Validation
+    const validExperience = ['beginner', 'intermediate', 'advanced', 'expert']
+    const validDuration = ['15-30', '30-45', '45-60', '60+']
+    const validGoals = ['weight_loss', 'muscle_building', 'strength_power', 'military_tactical', 'glute_enhancement', 'next_level_performance']
+    const validEnvironments = ['time_constrained', 'equipment_limited', 'gym_access', 'home_focused']
+    
+    if (!validExperience.includes(experience_level) || 
+        !validDuration.includes(workout_duration) ||
+        !validGoals.includes(primary_goal) ||
+        !validEnvironments.includes(workout_environment)) {
+      return c.json({ error: 'Invalid fitness profile data' }, 400)
+    }
+    
+    // Insert or update fitness profile
+    const result = await c.env.DB.prepare(`
+      INSERT OR REPLACE INTO user_fitness_profiles 
+      (user_id, experience_level, workout_duration, primary_goal, workout_environment) 
+      VALUES (?, ?, ?, ?, ?)
+    `).bind(userId, experience_level, workout_duration, primary_goal, workout_environment).run()
+    
+    if (!result.success) {
+      return c.json({ error: 'Failed to save fitness profile' }, 500)
+    }
+    
+    // Track funnel event
+    await c.env.DB.prepare(`
+      INSERT INTO lead_funnel_events (user_id, event_type, event_data) 
+      VALUES (?, 'fitness_assessment_completed', ?)
+    `).bind(userId, JSON.stringify({ 
+      phase: 'fitness_profile',
+      experience_level,
+      primary_goal,
+      workout_environment
+    })).run()
+    
+    return c.json({ success: true, message: 'Fitness profile saved successfully' })
+  } catch (error) {
+    console.error('Error saving fitness profile:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Phase 3: Add equipment availability
+app.post('/api/users/:id/equipment', async (c) => {
+  try {
+    const userId = c.req.param('id')
+    const { equipment } = await c.req.json()
+    
+    if (!Array.isArray(equipment)) {
+      return c.json({ error: 'Equipment must be an array' }, 400)
+    }
+    
+    // Clear existing equipment for user
+    await c.env.DB.prepare('DELETE FROM user_equipment WHERE user_id = ?').bind(userId).run()
+    
+    // Insert new equipment selections
+    for (const item of equipment) {
+      await c.env.DB.prepare(`
+        INSERT INTO user_equipment (user_id, equipment_type, available) 
+        VALUES (?, ?, true)
+      `).bind(userId, item).run()
+    }
+    
+    // Track funnel event
+    await c.env.DB.prepare(`
+      INSERT INTO lead_funnel_events (user_id, event_type, event_data) 
+      VALUES (?, 'equipment_profile_completed', ?)
+    `).bind(userId, JSON.stringify({ 
+      phase: 'equipment_selection',
+      equipment_count: equipment.length,
+      equipment_types: equipment
+    })).run()
+    
+    return c.json({ success: true, message: 'Equipment profile saved successfully' })
+  } catch (error) {
+    console.error('Error saving equipment profile:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Phase 4: Add injury/limitation screening
+app.post('/api/users/:id/injuries', async (c) => {
+  try {
+    const userId = c.req.param('id')
+    const { injuries } = await c.req.json()
+    
+    if (!Array.isArray(injuries)) {
+      return c.json({ error: 'Injuries must be an array' }, 400)
+    }
+    
+    // Clear existing injuries for user
+    await c.env.DB.prepare('DELETE FROM user_injuries WHERE user_id = ?').bind(userId).run()
+    
+    // Insert new injury data
+    for (const injury of injuries) {
+      await c.env.DB.prepare(`
+        INSERT INTO user_injuries (user_id, injury_type, body_part, severity, is_current, notes) 
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).bind(userId, injury.type, injury.body_part, injury.severity || 'moderate', 
+              injury.is_current || true, injury.notes || '').run()
+    }
+    
+    // Track funnel event
+    await c.env.DB.prepare(`
+      INSERT INTO lead_funnel_events (user_id, event_type, event_data) 
+      VALUES (?, 'injury_screening_completed', ?)
+    `).bind(userId, JSON.stringify({ 
+      phase: 'injury_screening',
+      injury_count: injuries.length,
+      profile_complete: true
+    })).run()
+    
+    return c.json({ success: true, message: 'Injury profile saved successfully' })
+  } catch (error) {
+    console.error('Error saving injury profile:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Get complete user profile
+app.get('/api/users/:id/profile', async (c) => {
+  try {
+    const userId = c.req.param('id')
+    
+    // Get user basic info
+    const user = await c.env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(userId).first()
+    if (!user) {
+      return c.json({ error: 'User not found' }, 404)
+    }
+    
+    // Get fitness profile
+    const fitnessProfile = await c.env.DB.prepare(
+      'SELECT * FROM user_fitness_profiles WHERE user_id = ?'
+    ).bind(userId).first()
+    
+    // Get equipment
+    const equipment = await c.env.DB.prepare(
+      'SELECT equipment_type FROM user_equipment WHERE user_id = ? AND available = true'
+    ).bind(userId).all()
+    
+    // Get injuries
+    const injuries = await c.env.DB.prepare(
+      'SELECT * FROM user_injuries WHERE user_id = ? AND is_current = true'
+    ).bind(userId).all()
+    
+    return c.json({
+      user,
+      fitness_profile: fitnessProfile,
+      equipment: equipment.results?.map(e => e.equipment_type) || [],
+      injuries: injuries.results || []
+    })
+  } catch (error) {
+    console.error('Error fetching user profile:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// =============================================================================
+// AI WORKOUT GENERATION ENDPOINTS
+// =============================================================================
+
+// Generate personalized workout plan
+app.post('/api/users/:id/generate-workout', async (c) => {
+  try {
+    const userId = c.req.param('id')
+    
+    // Get complete user profile
+    const profileResponse = await fetch(`${c.req.url.replace(/\/api\/users\/\d+\/generate-workout$/, '')}/api/users/${userId}/profile`)
+    const profile = await profileResponse.json()
+    
+    if (!profile.user || !profile.fitness_profile) {
+      return c.json({ error: 'Complete profile required for workout generation' }, 400)
+    }
+    
+    // Simple AI matching algorithm (will enhance with Cloudflare AI later)
+    const workoutPlan = await generateWorkoutPlan(c.env.DB, profile)
+    
+    // Save generated workout
+    const result = await c.env.DB.prepare(`
+      INSERT INTO generated_workouts 
+      (user_id, workout_date, estimated_duration, estimated_calories, difficulty_score, workout_data) 
+      VALUES (?, date('now'), ?, ?, ?, ?)
+    `).bind(
+      userId,
+      workoutPlan.estimated_duration,
+      workoutPlan.estimated_calories,
+      workoutPlan.difficulty_score,
+      JSON.stringify(workoutPlan)
+    ).run()
+    
+    // Track funnel event
+    await c.env.DB.prepare(`
+      INSERT INTO lead_funnel_events (user_id, event_type, event_data) 
+      VALUES (?, 'workout_generated', ?)
+    `).bind(userId, JSON.stringify({ 
+      workout_id: result.meta.last_row_id,
+      goal: profile.fitness_profile.primary_goal,
+      duration: workoutPlan.estimated_duration
+    })).run()
+    
+    return c.json({ 
+      success: true, 
+      workout_id: result.meta.last_row_id,
+      workout: workoutPlan 
+    })
+  } catch (error) {
+    console.error('Error generating workout:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// =============================================================================
+// FRONTEND ROUTES
+// =============================================================================
+
+// Main application route
+app.get('/', (c) => {
+  return c.render(
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Free 14-Day Harmonizing Fitness | AI-Powered Personalized Workouts</title>
+        <meta name="description" content="Get your FREE personalized 14-day fitness program powered by AI. Military-tested methods for all fitness levels. No gym required!" />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+          tailwind.config = {{
+            theme: {{
+              extend: {{
+                colors: {{
+                  'burnt-orange': '#CC5500',
+                  'deep-black': '#000000'
+                }}
+              }}
+            }}
+          }}
+        </script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet" />
+        <link href="/static/style.css" rel="stylesheet" />
+      </head>
+      <body class="bg-black text-white min-h-screen">
+        <div id="app">
+          {/* Hero Section */}
+          <section class="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black">
+            <div class="absolute inset-0 bg-gradient-to-r from-burnt-orange/10 to-transparent"></div>
+            <div class="relative z-10 max-w-6xl mx-auto px-6 text-center">
+              <div class="mb-8">
+                <i class="fas fa-dumbbell text-6xl text-burnt-orange mb-4"></i>
+                <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+                  <span class="text-burnt-orange">FREE</span> 14-Day<br />
+                  <span class="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                    AI-Powered Fitness
+                  </span>
+                </h1>
+                <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
+                  Military-tested fitness methods meet cutting-edge AI. Get your personalized workout plan in under 3 minutes.
+                  <span class="text-burnt-orange font-semibold">No gym required.</span>
+                </p>
+              </div>
+              
+              <div class="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12">
+                <button id="start-assessment" class="bg-burnt-orange hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+                  <i class="fas fa-rocket mr-3"></i>
+                  Start Your Free Assessment
+                </button>
+                <div class="text-gray-400">
+                  <i class="fas fa-clock mr-2"></i>
+                  Takes only 3 minutes
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+                <div class="text-center">
+                  <i class="fas fa-brain text-3xl text-burnt-orange mb-4"></i>
+                  <h3 class="text-xl font-bold mb-2">AI-Powered Matching</h3>
+                  <p class="text-gray-400">Advanced algorithms create workouts tailored to your goals, experience, and equipment.</p>
+                </div>
+                <div class="text-center">
+                  <i class="fas fa-medal text-3xl text-burnt-orange mb-4"></i>
+                  <h3 class="text-xl font-bold mb-2">Military-Tested Methods</h3>
+                  <p class="text-gray-400">Proven techniques from Army Ranger training, adapted for all fitness levels.</p>
+                </div>
+                <div class="text-center">
+                  <i class="fas fa-home text-3xl text-burnt-orange mb-4"></i>
+                  <h3 class="text-xl font-bold mb-2">Anywhere, Anytime</h3>
+                  <p class="text-gray-400">Bodyweight exercises, home equipment options, or full gym routines - you choose.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+          
+          {/* Assessment Modal */}
+          <div id="assessment-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden z-50 flex items-center justify-center p-4">
+            <div class="bg-gray-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div id="assessment-content" class="p-8">
+                {/* Dynamic content will be loaded here */}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+        <script src="/static/app.js"></script>
+      </body>
+    </html>
+  )
+})
+
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+// Simple AI workout generation logic (placeholder for more sophisticated AI)
+async function generateWorkoutPlan(db: D1Database, profile: any) {
+  const { fitness_profile, equipment, injuries } = profile
+  
+  // Get suitable exercises based on profile
+  let query = `
+    SELECT e.* FROM exercises e 
+    WHERE e.is_active = 1
+  `
+  
+  // Filter by equipment availability
+  if (equipment.length > 0) {
+    const equipmentFilter = equipment.map(() => '?').join(',')
+    query += ` AND json_extract(e.equipment_required, '$[0]') IN (${equipmentFilter})`
+  }
+  
+  // Exclude exercises based on injuries
+  if (injuries.length > 0) {
+    query += ` AND e.contraindications NOT LIKE '%' || ? || '%'`
+  }
+  
+  // Limit by difficulty based on experience
+  const maxDifficulty = {
+    'beginner': 2,
+    'intermediate': 3,
+    'advanced': 4,
+    'expert': 5
+  }[fitness_profile.experience_level] || 2
+  
+  query += ` AND e.difficulty_level <= ? ORDER BY RANDOM() LIMIT 8`
+  
+  const params = [...equipment]
+  if (injuries.length > 0) {
+    params.push(injuries[0].injury_type)
+  }
+  params.push(maxDifficulty)
+  
+  const exercises = await db.prepare(query).bind(...params).all()
+  
+  // Calculate workout duration based on user preference
+  const durationMap = {
+    '15-30': 25,
+    '30-45': 35,
+    '45-60': 50,
+    '60+': 65
+  }
+  
+  const targetDuration = durationMap[fitness_profile.workout_duration] || 30
+  const estimatedCalories = Math.round(targetDuration * 8) // Rough estimate
+  
+  return {
+    name: `Personalized ${fitness_profile.primary_goal.replace('_', ' ').toUpperCase()} Workout`,
+    estimated_duration: targetDuration,
+    estimated_calories: estimatedCalories,
+    difficulty_score: maxDifficulty,
+    exercises: exercises.results?.slice(0, 6) || [],
+    structure: {
+      warmup: ['Jumping Jacks', 'Bodyweight Squat'],
+      main: exercises.results?.slice(0, 4).map(e => e.name) || [],
+      cooldown: ['Downward Dog']
+    },
+    notes: `Customized for ${fitness_profile.experience_level} level ${fitness_profile.primary_goal.replace('_', ' ')} goals`
+  }
+}
 
 export default app
