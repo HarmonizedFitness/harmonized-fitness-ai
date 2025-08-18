@@ -131,25 +131,24 @@ class FitnessAssessment {
       return;
     }
     
-    try {
-      const response = await axios.post('/api/users', {
-        full_name: data.full_name,
-        email: data.email,
-        age: parseInt(data.age),
-        gender: data.gender
-      });
-      
-      if (response.data.success) {
-        this.userData = { ...data, user_id: response.data.user_id };
-        this.currentPhase = 2;
-        this.renderPhase2();
-      } else {
-        this.showError(response.data.error || 'Failed to save your information');
-      }
-    } catch (error) {
-      console.error('Phase 1 error:', error);
-      this.showError('Something went wrong. Please try again.');
-    }
+    // Demo mode - skip API call and proceed directly
+    // Store user data locally for demo purposes
+    this.userData = { 
+      ...data, 
+      user_id: 'demo-' + Date.now(), // Generate a demo user ID
+      age: parseInt(data.age)
+    };
+    
+    // Show brief loading animation for realism
+    const button = form.querySelector('button[type="submit"]');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+    button.disabled = true;
+    
+    setTimeout(() => {
+      this.currentPhase = 2;
+      this.renderPhase2();
+    }, 800); // Brief delay for better UX
   }
   
   // =======================================================================
