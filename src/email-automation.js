@@ -169,13 +169,13 @@ export class EmailAutomation {
             </ul>
             
             <h4>💪 Main Exercises</h4>
-            ${day1Workout.main_exercises.map(exercise => `
+            ${day1Workout.main_exercises.map((exercise, index) => `
               <div class="exercise">
-                <h5>${exercise.exercise_name}</h5>
+                <h5>${index + 1}. ${exercise.exercise_name}</h5>
                 <p><strong>Sets:</strong> ${exercise.sets} | <strong>Reps:</strong> ${exercise.reps} | <strong>Rest:</strong> ${exercise.rest_seconds}s</p>
                 <p><strong>Focus:</strong> ${exercise.primary_muscle_group}</p>
-                <p><strong>Instructions:</strong> ${exercise.instructions}</p>
-                <p><strong>Form Cues:</strong> ${exercise.form_cues}</p>
+                <p><strong>Instructions:</strong> ${exercise.instructions || `Train ${exercise.reps} reps for ${exercise.sets} sets. Last set to near-failure (RIR 1–2). ${exercise.tempo_notes} Rest ${exercise.rest_seconds}s.`}</p>
+                <p><strong>Form Cues:</strong> ${exercise.form_cues || 'Move like a pro: identical reps first to last. Own the last 2 inches each direction.'}</p>
               </div>
             `).join('')}
             

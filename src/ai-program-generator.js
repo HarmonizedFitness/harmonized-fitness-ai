@@ -477,27 +477,32 @@ export class ProgramGenerator {
     ];
   }
 
-  // Create specific exercise from template with progressive programming
+  // Create specific exercise from template with hypertrophy-first programming
   createCustomExercise(template, fitnessProfile, progressionMultiplier, day) {
-    // Calculate progressive sets and reps
-    const baseReps = this.getBaseRepsForExercise(template, fitnessProfile);
-    const baseSets = this.getBaseSetsForExercise(template, fitnessProfile);
-    
-    // Apply goal-specific adjustments
-    const goalAdjustments = {
-      weight_loss: { reps: 1.2, sets: 1.1, rest: 30 },
-      muscle_building: { reps: 1.0, sets: 1.2, rest: 60 },
-      strength_power: { reps: 0.8, sets: 1.3, rest: 90 },
-      military_prep: { reps: 1.1, sets: 1.1, rest: 45 },
-      glute_enhancement: { reps: 1.1, sets: 1.0, rest: 45 },
-      level_up: { reps: 0.9, sets: 1.4, rest: 90 }
+    // Hypertrophy standard: 3–4 sets, 10–12 reps, near-failure on last set
+    const setsByLevel = {
+      beginner: 3,
+      intermediate: 3,
+      advanced: 4,
+      expert: 4
     };
-    
-    const adjustment = goalAdjustments[fitnessProfile.primary_goal] || goalAdjustments.muscle_building;
-    
-    const finalSets = Math.max(1, Math.round(baseSets * adjustment.sets * progressionMultiplier));
-    const finalReps = Math.max(1, Math.round(baseReps * adjustment.reps * progressionMultiplier));
-    
+
+    const finalSets = setsByLevel[fitnessProfile.experience_level] || 3;
+    const finalReps = '10-12';
+
+    // Rest tuned for hypertrophy with small experience variance
+    const restByLevel = {
+      beginner: 60,
+      intermediate: 60,
+      advanced: 75,
+      expert: 90
+    };
+    const rest_seconds = restByLevel[fitnessProfile.experience_level] || 60;
+
+    const tempo = this.generateHypertrophyTempo(fitnessProfile.primary_goal, template.category);
+    const cues = this.generateHypertrophyFormCue(template, fitnessProfile.experience_level);
+    const instruction = `Train ${finalReps} reps for ${finalSets} sets. Last set to near-failure (RIR 1–2). ${tempo} Rest ${rest_seconds}s between sets.`;
+
     return {
       name: template.name,
       category: template.category,
@@ -505,38 +510,22 @@ export class ProgramGenerator {
       target_muscle_groups: [template.bodyPart],
       sets: finalSets,
       reps: finalReps,
-      rest_seconds: adjustment.rest,
-      tempo_notes: this.generateDrUTempoNotes(fitnessProfile.primary_goal, template.category, finalReps),
-      coaching_cue: this.generateRepSpecificCue(finalSets, finalReps, template.name),
+      rest_seconds,
+      tempo_notes: tempo,
+      coaching_cue: cues,
       intensity_level: Math.ceil(progressionMultiplier * 5),
       difficulty_progression: day <= 7 ? 'Week 1 Foundation' : 'Week 2 Advancement'
     };
   }
 
-  // Get base reps for exercise type
+  // Get base reps for exercise type (kept for legacy paths) – default to hypertrophy
   getBaseRepsForExercise(template, fitnessProfile) {
-    const repRanges = {
-      strength: { beginner: 8, intermediate: 10, advanced: 12, expert: 10 },
-      cardio: { beginner: 20, intermediate: 30, advanced: 40, expert: 35 },
-      functional: { beginner: 10, intermediate: 12, advanced: 15, expert: 12 },
-      advanced: { beginner: 5, intermediate: 8, advanced: 10, expert: 12 },
-      activation: { beginner: 12, intermediate: 15, advanced: 20, expert: 18 }
-    };
-    
-    return repRanges[template.category]?.[fitnessProfile.experience_level] || 10;
+    return 12;
   }
 
-  // Get base sets for exercise type
+  // Get base sets for exercise type (kept for legacy paths) – default to hypertrophy
   getBaseSetsForExercise(template, fitnessProfile) {
-    const setRanges = {
-      strength: { beginner: 2, intermediate: 3, advanced: 3, expert: 4 },
-      cardio: { beginner: 2, intermediate: 3, advanced: 4, expert: 3 },
-      functional: { beginner: 2, intermediate: 3, advanced: 3, expert: 4 },
-      advanced: { beginner: 2, intermediate: 3, advanced: 4, expert: 4 },
-      activation: { beginner: 2, intermediate: 2, advanced: 3, expert: 3 }
-    };
-    
-    return setRanges[template.category]?.[fitnessProfile.experience_level] || 3;
+    return ['advanced','expert'].includes(fitnessProfile.experience_level) ? 4 : 3;
   }
 
   // Check if exercise conflicts with injuries
@@ -599,53 +588,19 @@ export class ProgramGenerator {
     return selectedExercises;
   }
 
-  // Calculate sets and reps with Dr. U's philosophy - Listen to your body
+  // Calculate sets and reps (legacy path) – force hypertrophy standard
   calculateSetsReps(exercise, fitnessProfile, progressionMultiplier) {
-    // Dr. U's sweet spot rep ranges - where the magic happens
-    const baseReps = {
-      beginner: { strength: 8, cardio: 20, flexibility: 30 },
-      intermediate: { strength: 10, cardio: 25, flexibility: 45 },
-      advanced: { strength: 12, cardio: 30, flexibility: 60 },
-      expert: { strength: 15, cardio: 35, flexibility: 90 }
-    };
+    const sets = ['advanced','expert'].includes(fitnessProfile.experience_level) ? 4 : 3;
+    const reps = '10-12';
+    const rest = ['advanced','expert'].includes(fitnessProfile.experience_level) ? 75 : 60;
 
-    const baseSets = {
-      beginner: 2,
-      intermediate: 3,
-      advanced: 3,
-      expert: 4
-    };
-
-    const category = exercise.category || 'strength';
-    const baseRepCount = baseReps[fitnessProfile.experience_level][category] || baseReps[fitnessProfile.experience_level].strength;
-    const baseSetCount = baseSets[fitnessProfile.experience_level];
-
-    // Apply progression multiplier
-    const adjustedReps = Math.round(baseRepCount * progressionMultiplier);
-    const adjustedSets = Math.max(1, Math.round(baseSetCount * progressionMultiplier));
-
-    // Goal-specific adjustments
-    const goalAdjustments = {
-      weight_loss: { reps: 1.2, sets: 1.1, rest: 30 },
-      muscle_building: { reps: 1.0, sets: 1.2, rest: 60 },
-      strength_power: { reps: 0.8, sets: 1.3, rest: 90 },
-      military_prep: { reps: 1.1, sets: 1.1, rest: 45 },
-      glute_enhancement: { reps: 1.1, sets: 1.0, rest: 45 },
-      level_up: { reps: 0.9, sets: 1.4, rest: 90 } // Lower reps, more sets for advanced techniques
-    };
-
-    const adjustment = goalAdjustments[fitnessProfile.primary_goal] || goalAdjustments.muscle_building;
-
-    const finalSets = Math.round(adjustedSets * adjustment.sets);
-    const finalReps = category === 'flexibility' ? `${adjustedReps} seconds` : Math.round(adjustedReps * adjustment.reps);
-    
     return {
-      sets: finalSets,
-      reps: finalReps,
-      rest_seconds: adjustment.rest,
-      tempo_notes: this.generateDrUTempoNotes(fitnessProfile.primary_goal, category, finalReps),
-      intensity_level: Math.ceil(progressionMultiplier * 5), // 1-5 scale
-      coaching_cue: this.generateRepSpecificCue(finalSets, finalReps, exercise.name)
+      sets,
+      reps,
+      rest_seconds: rest,
+      tempo_notes: this.generateHypertrophyTempo(fitnessProfile.primary_goal, exercise.category || 'strength'),
+      intensity_level: Math.ceil(progressionMultiplier * 5),
+      coaching_cue: this.generateHypertrophyFormCue({ name: exercise.name, bodyPart: exercise.primary_muscle_group, equipment: (exercise.equipment_required||'["bodyweight"]').replace(/\[|\]|"/g,'') }, fitnessProfile.experience_level)
     };
   }
 
@@ -824,19 +779,61 @@ export class ProgramGenerator {
   }
 
   generateDrUTempoNotes(primaryGoal, category, reps) {
-    const tempos = {
-      weight_loss: "Move with purpose - controlled descent, explosive up. That eccentric phase is where the magic happens for fat burning.",
-      muscle_building: "This is where we build strength from the inside out. 2 seconds down (feel that stretch), pause briefly, then power up. Your muscles are strongest when lengthening - use it!",
-      strength_power: "Explosive concentric, but CONTROL that eccentric. Power without control is just chaos. Master the descent, dominate the ascent.", 
-      military_prep: "Adapt your tempo to the mission. Sometimes slow and controlled, sometimes explosive. Train like your life depends on it.",
-      glute_enhancement: "Slow and deliberate - we're waking up those glutes! Feel every inch of the movement. Mind-muscle connection isn't just a phrase, it's your secret weapon.",
-      level_up: "Here's where we separate amateur from elite: 3-second eccentrics in lengthened position, 1-second pause, then explosive up. Try pulse reps at the bottom range - 5 pulses, then full rep. Switch your grip every set to hit different angles. That extra squeeze at the top? Hold it for 2 seconds. These details unlock breakthrough performance."
+    // Retained for compatibility; now we route to hypertrophy tempo
+    return this.generateHypertrophyTempo(primaryGoal, category);
+  }
+
+  generateHypertrophyTempo(primaryGoal, category) {
+    const base = "3s eccentric, 1s pause in the stretch, controlled up. Squeeze hard at peak for 1–2s.";
+    const flavor = {
+      strength: "Control builds strength. Own the descent.",
+      functional: "Stay stable. Tempo reveals weak links.",
+      cardio: "Keep rhythm but never sacrifice control.",
+      activation: "Feel the muscle. Light load, perfect control.",
+      flexibility: "Slow breathing, soften into the range."
+    };
+    return `${base} ${flavor[category] || ''}`.trim();
+  }
+
+  generateHypertrophyFormCue(template, experienceLevel) {
+    const body = (template.bodyPart || '').toLowerCase();
+    const equipment = (template.equipment || 'bodyweight').toLowerCase();
+
+    const library = {
+      chest: [
+        "Elbows 45°, shoulder blades tucked, chest leads every rep.",
+        "Lower to mid-chest, keep ribs down, crush the squeeze at top."
+      ],
+      back: [
+        "Pull elbows to your hips, not your hands. Feel lats initiate.",
+        "Chest proud, shoulder blades down and back."
+      ],
+      shoulders: [
+        "Stack joints. No shrugging. Control end ranges.",
+        "Soft lockout, think 'reach' not 'heave'."
+      ],
+      legs: [
+        "Knees track over toes, full foot pressure, drive through mid-foot.",
+        "Own the bottom position. Hips and knees extend together."
+      ],
+      glutes: [
+        "Posterior tilt at top, pause and squeeze.",
+        "Push through heels, keep ribs down to isolate glutes."
+      ],
+      core: [
+        "Ribs down, pelvis neutral. Brace like you're about to be punched.",
+        "Exhale through the hardest part. No spinal movement."
+      ]
     };
 
-    const baseNote = tempos[primaryGoal] || "Listen to your body and move with intention. Form first, intensity second.";
-    const repAdvice = reps >= 12 ? " Remember: those last 2-3 reps are where transformation lives." : " Quality over quantity - make every rep count.";
-    
-    return baseNote + repAdvice;
+    const generic = [
+      "Own the last 2 inches of both directions.",
+      "Move like a professional: identical reps from first to last.",
+      "Mind-muscle connection: if you can't feel it, slow down."
+    ];
+
+    const pool = library[body] || generic;
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 
   generateModifications(exercise, fitnessProfile) {
@@ -965,15 +962,7 @@ export class ProgramGenerator {
   }
 
   generateRepSpecificCue(sets, reps, exerciseName) {
-    const repCount = typeof reps === 'string' ? parseInt(reps) : reps;
-    
-    if (repCount <= 6) {
-      return "Low reps, high focus. Every single rep should look identical. This is where strength is forged.";
-    } else if (repCount <= 12) {
-      return "The sweet spot for most of us. Aim for 10-12 quality reps, but listen to your body - it knows when to push and when to pause.";
-    } else {
-      return "Higher reps mean playing in the tension zone longer. Embrace the discomfort - that's where transformation lives.";
-    }
+    return `Aim for ${typeof reps === 'string' ? reps : '10-12'} controlled reps. Leave 1–2 reps in reserve until the final set, then push to near-failure with perfect form.`;
   }
 
   generateNutritionGuidance(fitnessProfile) {
