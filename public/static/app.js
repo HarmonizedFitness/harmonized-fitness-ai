@@ -95,8 +95,6 @@ class FitnessAssessment {
               <option value="">Select Gender</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
-              <option value="non_binary">Non-binary</option>
-              <option value="prefer_not_to_say">Prefer not to say</option>
             </select>
           </div>
         </div>
@@ -763,15 +761,17 @@ class FitnessAssessment {
     let injuries = [];
     if (hasInjuries !== 'none') {
       const injuryDetails = formData.get('injury_details') || '';
-      if (hasInjuries !== 'none' && !injuryDetails.trim()) {
+      if (!injuryDetails.trim()) {
         this.showError('Please provide a brief description of your injuries or concerns');
         return;
       }
       
       injuries = [{
+        type: 'general',  // Backend expects 'type' not 'injury_type'
+        body_part: 'general',  // Backend expects this field
         severity: hasInjuries,
-        description: injuryDetails.trim(),
-        injury_type: 'general' // We'll keep it simple for now
+        is_current: true,
+        notes: injuryDetails.trim()  // Backend expects 'notes' not 'description'
       }];
     }
     
@@ -781,6 +781,7 @@ class FitnessAssessment {
     button.disabled = true;
     
     try {
+      // Always save injuries (even if empty array for "none")
       const response = await axios.post(`/api/users/${this.userData.user_id}/injuries`, {
         injuries: injuries
       });
@@ -790,11 +791,12 @@ class FitnessAssessment {
         this.startProgramGeneration();
       } else {
         this.showError('Failed to save injury information. Please try again.');
+        button.innerHTML = originalText;
+        button.disabled = false;
       }
     } catch (error) {
       console.error('Phase 4 API Error:', error);
       this.showError('Connection error. Please check your internet and try again.');
-    } finally {
       button.innerHTML = originalText;
       button.disabled = false;
     }

@@ -14,7 +14,9 @@ export class ProgramGenerator {
 
   // Main program generation function
   async generatePersonalized14DayProgram(userProfile, exercises) {
+    console.log('ProgramGenerator: Starting generation...')
     const { fitness_profile, equipment, injuries } = userProfile;
+    console.log('ProgramGenerator: Profile extracted, goal:', fitness_profile?.primary_goal)
     
     // Create the 14-day program structure
     const program = {
@@ -353,6 +355,43 @@ export class ProgramGenerator {
       { name: 'Archer Push-ups', category: 'advanced', bodyPart: 'chest', equipment: 'bodyweight' },
       { name: 'Pistol Squat Progressions', category: 'advanced', bodyPart: 'legs', equipment: 'bodyweight' },
       { name: 'L-Sit Holds', category: 'advanced', bodyPart: 'core', equipment: 'bodyweight' }
+    );
+    
+    return templates;
+  }
+
+  // LEVEL UP: Plateau Breaker Templates - Advanced Techniques
+  generatePlateuBreakerTemplates(equipment, primaryGoal) {
+    const templates = [];
+    
+    // Pulse reps in lengthened position
+    templates.push(
+      { name: 'Bottom Position Pulse Chest Press', category: 'plateau_breaker', bodyPart: 'chest', equipment: 'dumbbells' },
+      { name: 'Deep Squat Pulse + Explosive Rise', category: 'plateau_breaker', bodyPart: 'legs', equipment: 'bodyweight' },
+      { name: 'Lengthened Bicep Curls w/ Pulses', category: 'plateau_breaker', bodyPart: 'arms', equipment: 'dumbbells' }
+    );
+    
+    // Grip variations for enhanced stimulus
+    if (equipment.includes('barbell') || equipment.includes('dumbbells')) {
+      templates.push(
+        { name: 'Offset Grip Rows', category: 'plateau_breaker', bodyPart: 'back', equipment: 'dumbbells' },
+        { name: 'Single Arm Overhead Press', category: 'plateau_breaker', bodyPart: 'shoulders', equipment: 'dumbbells' },
+        { name: 'Farmers Walk w/ Grip Switch', category: 'plateau_breaker', bodyPart: 'full_body', equipment: 'dumbbells' }
+      );
+    }
+    
+    // 3-second eccentrics for time under tension
+    templates.push(
+      { name: '3-Second Negative Push-ups', category: 'plateau_breaker', bodyPart: 'chest', equipment: 'bodyweight' },
+      { name: 'Slow Descent Squats (3s down)', category: 'plateau_breaker', bodyPart: 'legs', equipment: 'bodyweight' },
+      { name: 'Controlled Lowering Pull-ups', category: 'plateau_breaker', bodyPart: 'back', equipment: 'pull_up_bar' }
+    );
+    
+    // 2-second peak contractions
+    templates.push(
+      { name: 'Pause Rep Shoulder Press (2s hold)', category: 'plateau_breaker', bodyPart: 'shoulders', equipment: 'dumbbells' },
+      { name: 'Isometric Squat Holds + Reps', category: 'plateau_breaker', bodyPart: 'legs', equipment: 'bodyweight' },
+      { name: 'Peak Contraction Bicep Curls', category: 'plateau_breaker', bodyPart: 'arms', equipment: 'dumbbells' }
     );
     
     return templates;
