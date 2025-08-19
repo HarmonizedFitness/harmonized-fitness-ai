@@ -10,6 +10,50 @@ type Bindings = {
   AI: any; // Cloudflare AI binding
 }
 
+// Canonical equipment map and helpers to keep UI flexible while backend stays consistent
+const EQUIPMENT_MAP: Record<string, string> = Object.freeze({
+  bodyweight_only: 'bodyweight',
+  bodyweight: 'bodyweight',
+  barbells: 'barbell',
+  barbell: 'barbell',
+  dumbbells: 'dumbbells',
+  kettlebells: 'kettlebells',
+  resistance_bands: 'resistance_bands',
+  trx_suspension: 'trx',
+  trx: 'trx',
+  squat_rack: 'squat_rack',
+  workout_bench: 'workout_bench',
+  pullup_bar: 'pull_up_bar',
+  pull_up_bar: 'pull_up_bar',
+  glute_bands: 'glute_bands'
+})
+
+// Expand to include DB synonyms when searching JSON strings
+const EQUIPMENT_SYNONYMS: Record<string, string[]> = Object.freeze({
+  barbell: ['barbell', 'barbells'],
+  pull_up_bar: ['pull_up_bar', 'pullup_bar'],
+  bodyweight: ['bodyweight', 'bodyweight_only'],
+  trx: ['trx', 'trx_suspension']
+})
+
+function normalizeEquipmentList(list: string[] = []): string[] {
+  const set = new Set<string>()
+  for (const item of list) {
+    const key = (item || '').toString().trim().toLowerCase()
+    set.add(EQUIPMENT_MAP[key] || key)
+  }
+  return Array.from(set)
+}
+
+function expandEquipmentForQuery(canonList: string[] = []): string[] {
+  const set = new Set<string>()
+  for (const c of canonList) {
+    const syns = EQUIPMENT_SYNONYMS[c] || [c]
+    syns.forEach(s => set.add(s))
+  }
+  return Array.from(set)
+}
+
 const app = new Hono<{ Bindings: Bindings }>()
 
 // Enable CORS for API routes
@@ -135,7 +179,7 @@ app.post('/api/users/:id/fitness-profile', async (c) => {
   }
 })
 
-// Phase 3: Add equipment availability
+// Phase 3: Add equipment availability (with normalization)
 app.post('/api/users/:id/equipment', async (c) => {
   try {
     const userId = c.req.param('id')
@@ -145,11 +189,14 @@ app.post('/api/users/:id/equipment', async (c) => {
       return c.json({ error: 'Equipment must be an array' }, 400)
     }
     
+    // Normalize to canonical tokens
+    const normalized = normalizeEquipmentList(equipment as string[])
+    
     // Clear existing equipment for user
     await c.env.DB.prepare('DELETE FROM user_equipment WHERE user_id = ?').bind(userId).run()
     
-    // Insert new equipment selections
-    for (const item of equipment) {
+    // Insert new equipment selections (canonical form)
+    for (const item of normalized) {
       await c.env.DB.prepare(`
         INSERT INTO user_equipment (user_id, equipment_type, available) 
         VALUES (?, ?, true)
@@ -162,8 +209,8 @@ app.post('/api/users/:id/equipment', async (c) => {
       VALUES (?, 'equipment_profile_completed', ?)
     `).bind(userId, JSON.stringify({ 
       phase: 'equipment_selection',
-      equipment_count: equipment.length,
-      equipment_types: equipment
+      equipment_count: normalized.length,
+      equipment_types: normalized
     })).run()
     
     return c.json({ success: true, message: 'Equipment profile saved successfully' })
@@ -173,7 +220,7 @@ app.post('/api/users/:id/equipment', async (c) => {
   }
 })
 
-// Phase 4: Add injury/limitation screening
+// Phase 4: Add injury/limitation screening (normalize severity values to DB constraints)
 app.post('/api/users/:id/injuries', async (c) => {
   try {
     const userId = c.req.param('id')
@@ -191,7 +238,8 @@ app.post('/api/users/:id/injuries', async (c) => {
       // Ensure all fields have valid values (never undefined)
       const injuryType = injury.type || 'general'
       const bodyPart = injury.body_part || 'general'
-      const severity = injury.severity || 'moderate'
+      const rawSeverity = (injury.severity || 'moderate').toString().toLowerCase()
+      const severity = rawSeverity === 'significant' ? 'severe' : (['minor','moderate','severe'].includes(rawSeverity) ? rawSeverity : 'moderate')
       const isCurrent = injury.is_current !== undefined ? injury.is_current : true
       const notes = injury.notes || ''
       
@@ -260,7 +308,7 @@ app.get('/api/users/:id/profile', async (c) => {
 // AI WORKOUT GENERATION ENDPOINTS
 // =============================================================================
 
-// Generate personalized 14-day program and initiate delivery
+// Generate personalized 14-day program and initiate delivery (duration fix + real AI day plans)
 app.post('/api/users/:id/generate-program', async (c) => {
   try {
     const userId = c.req.param('id')
@@ -275,91 +323,68 @@ app.post('/api/users/:id/generate-program', async (c) => {
       return c.json({ error: 'Complete profile required for program generation' }, 400)
     }
     
-    // Generate full 14-day program using AI - NO DATABASE DEPENDENCY
+    // Generate full 14-day program using ProgramGenerator (injury/equipment aware)
     console.log('Generating program for goal:', profile.fitness_profile.primary_goal)
-    
-    // Simplified but functional AI program generation for comprehensive testing
-    const fullProgram = {
+    const { ProgramGenerator } = await import('./ai-program-generator.js')
+    const programGenerator = new ProgramGenerator()
+    const generated = await programGenerator.generatePersonalized14DayProgram(profile, [])
+
+    // Transform exercises to EmailAutomation-compatible shape
+    const mapExerciseForEmail = (ex: any, fitnessProfile: any) => {
+      // ex comes from ProgramGenerator.createCustomExercise
+      const modifications = programGenerator.generateModifications({ name: ex.name, category: ex.category }, fitnessProfile)
+      return {
+        exercise_name: ex.name,
+        sets: ex.sets,
+        reps: ex.reps,
+        rest_seconds: ex.rest_seconds,
+        primary_muscle_group: Array.isArray(ex.target_muscle_groups) ? ex.target_muscle_groups[0] : (ex.target_muscle_groups || ''),
+        intensity_level: ex.intensity_level,
+        form_cues: ex.coaching_cue || ex.tempo_notes || 'Controlled tempo, full range of motion',
+        instructions: `Tempo: ${ex.tempo_notes || 'controlled'}. Focus: ${ex.coaching_cue || 'quality reps'}.`,
+        modifications
+      }
+    }
+
+    const fullProgram: any = {
       user_profile: profile,
       program_overview: {
         title: `Personalized 14-Day ${profile.fitness_profile.primary_goal.replace('_', ' ')} Program`,
         goal: profile.fitness_profile.primary_goal,
         experience: profile.fitness_profile.experience_level,
         description: profile.fitness_profile.primary_goal === 'level_up' 
-          ? "Advanced techniques including pulse reps in lengthened position, grip variations, 3-second eccentrics, and 2-second peak contractions to break through plateaus."
-          : "Comprehensive program designed specifically for your goals and experience level."
+          ? 'Advanced techniques including pulse reps in lengthened position, grip variations, 3-second eccentrics, and 2-second peak contractions to break through plateaus.'
+          : 'Comprehensive program designed specifically for your goals and experience level.'
       },
       daily_plans: {},
-      progression_notes: "Progressive overload with injury-aware programming",
-      nutrition_guidance: "Balanced nutrition supporting your fitness goals",
+      progression_notes: 'Progressive overload with injury-aware programming',
+      nutrition_guidance: generated.nutrition_guidance,
       created_at: new Date().toISOString()
     }
-    
-    // Generate 14 days of workouts
+
+    const durationMap: Record<string, number> = { '15-30': 25, '30-45': 37, '45-60': 52, '60+': 75 }
+
     for (let day = 1; day <= 14; day++) {
-      const isRestDay = [4, 7, 11, 14].includes(day)
-      if (isRestDay) {
+      const dp = generated.daily_plans[day]
+      if (!dp) continue
+      if (dp.type === 'rest_day') {
+        // carry over rest day
         fullProgram.daily_plans[day] = {
-          day_number: day,
-          type: "rest_day",
-          title: `Recovery Day ${day}`,
-          activities: ["Light mobility work", "Stress management", "Recovery activities"],
-          workout_focus: profile.fitness_profile.primary_goal
+          ...dp
         }
       } else {
         fullProgram.daily_plans[day] = {
           day_number: day,
-          type: "workout_day", 
+          type: 'workout_day',
           title: `Training Day ${day}`,
-          estimated_duration: profile.fitness_profile.workout_duration,
-          difficulty_level: profile.fitness_profile.experience_level === 'advanced' ? 8 : 6,
-          workout_focus: profile.fitness_profile.primary_goal,
-          coaching_notes: {
-            daily_reminder: `Today we focus on ${profile.fitness_profile.primary_goal.replace('_', ' ')} with military precision and mindful execution.`,
-            goal_specific: profile.fitness_profile.primary_goal === 'military_prep' 
-              ? "Hooah! Channel that warrior spirit. Every rep builds not just muscle, but the mental toughness that defines a soldier. Push past what you thought possible."
-              : profile.fitness_profile.primary_goal === 'level_up'
-              ? "Time to break through plateaus with advanced techniques. Focus on perfect form with these challenging progressions - each rep is a conversation with your potential."
-              : "Stay consistent with your goals. Trust the process and remember - transformation happens one workout at a time."
-          },
-          exercises: profile.fitness_profile.primary_goal === 'level_up' ? [
-            {
-              name: "Pulse Rep Squats",
-              sets: 3,
-              reps: "8 + 5 pulse reps",
-              technique: "3-second eccentric, pulse reps in lengthened position",
-              equipment: "barbell"
-            },
-            {
-              name: "Grip Variation Pull-ups", 
-              sets: 3,
-              reps: "6-8 per grip",
-              technique: "Wide, neutral, chin-up grips with 2-second peak contractions",
-              equipment: "pull_up_bar"
-            }
-          ] : profile.fitness_profile.primary_goal === 'military_prep' ? [
-            {
-              name: "Combat-Ready Burpees",
-              sets: 4,
-              reps: "15-20",
-              technique: "Explosive movement, maintain form under fatigue",
-              equipment: "bodyweight"
-            },
-            {
-              name: "Tactical Loaded Carries",
-              sets: 3,
-              reps: "100 yards",
-              technique: "Maintain posture, controlled breathing",
-              equipment: "dumbbells"
-            }
-          ] : [
-            {
-              name: "Compound Movement",
-              sets: 3,
-              reps: "8-12",
-              technique: "Controlled tempo, full range of motion"
-            }
-          ]
+          estimated_duration: typeof dp.estimated_duration === 'number' ? dp.estimated_duration : (durationMap[profile.fitness_profile.workout_duration] ?? 30),
+          difficulty_level: dp.difficulty_level,
+          workout_focus: dp.workout_focus,
+          warmup: dp.warmup,
+          main_exercises: (dp.main_exercises || []).map((ex: any) => mapExerciseForEmail(ex, profile.fitness_profile)),
+          cooldown: dp.cooldown,
+          coaching_notes: dp.coaching_notes,
+          progression_from_previous: dp.progression_from_previous
         }
       }
     }
@@ -373,8 +398,8 @@ app.post('/api/users/:id/generate-program', async (c) => {
       VALUES (?, date('now'), ?, ?, ?, ?)
     `).bind(
       userId,
-      fullProgram.daily_plans[1].estimated_duration,
-      350, // Average estimated calories for program
+      Number(fullProgram.daily_plans[1].estimated_duration) || 30,
+      350,
       fullProgram.daily_plans[1].difficulty_level,
       JSON.stringify(fullProgram)
     ).run()
@@ -496,8 +521,7 @@ app.post('/api/test-email/:day', async (c) => {
       return c.json({ error: 'SendGrid API key required for testing' }, 400)
     }
     
-    // Set API key temporarily for this request
-    process.env.SENDGRID_API_KEY = api_key
+    // Note: In Workers runtime, process.env is not available. We'll pass api_key directly to sendEmail.
     
     // Get Sarah's profile for testing (user 98)
     const profileResponse = await fetch(`${c.req.url.replace(/\/api\/test-email\/\d+$/, '')}/api/users/98/profile`)
@@ -545,7 +569,7 @@ app.post('/api/test-email/:day', async (c) => {
       text: emailText
     }
     
-    const result = await emailSystem.sendEmail(emailContent)
+    const result = await emailSystem.sendEmail(emailContent, api_key)
     
     return c.json({
       success: result.success,
@@ -704,16 +728,33 @@ async function generateWorkoutPlan(db: D1Database, profile: any) {
     WHERE e.is_active = 1
   `
   
-  // Filter by equipment availability
-  if (equipment.length > 0) {
-    const equipmentFilter = equipment.map(() => '?').join(',')
-    query += ` AND json_extract(e.equipment_required, '$[0]') IN (${equipmentFilter})`
+  // Duration map moved up to avoid temporal dead zone in fallback
+  const durationMap = {
+    '15-30': 25,
+    '30-45': 35,
+    '45-60': 50,
+    '60+': 65
   }
   
-  // Exclude exercises based on injuries
-  if (injuries.length > 0) {
-    query += ` AND e.contraindications NOT LIKE '%' || ? || '%'`
+  // Normalize and expand equipment for matching JSON array reliably
+  const canonEquip = normalizeEquipmentList(equipment)
+  const queryEquip = expandEquipmentForQuery(canonEquip)
+  
+  // Filter by equipment availability (match any token inside JSON array)
+  if (queryEquip.length > 0) {
+    const likeClauses = queryEquip.map(() => `e.equipment_required LIKE '%"' || ? || '"%'`).join(' OR ')
+    query += ` AND (${likeClauses})`
   }
+
+  // Injury exclusions (first matching injury type term if any)
+  if (injuries.length > 0) {
+    const first = injuries[0]
+    const term = (first.injury_type || first.type || '').toString()
+    if (term) {
+      query += ` AND (e.contraindications IS NULL OR e.contraindications NOT LIKE '%' || ? || '%')`
+    }
+  }
+  
   
   // Limit by difficulty based on experience
   const maxDifficulty = {
@@ -738,22 +779,60 @@ async function generateWorkoutPlan(db: D1Database, profile: any) {
     query += ` AND e.difficulty_level <= ? ORDER BY RANDOM() LIMIT 8`
   }
   
-  const params = [...equipment]
+  const params: any[] = [...queryEquip]
   if (injuries.length > 0) {
-    params.push(injuries[0].injury_type)
+    const first = injuries[0]
+    const term = (first.injury_type || first.type || '').toString()
+    if (term) params.push(term)
   }
   params.push(maxDifficulty)
   
   const exercises = await db.prepare(query).bind(...params).all()
-  
-  // Calculate workout duration based on user preference
-  const durationMap = {
-    '15-30': 25,
-    '30-45': 35,
-    '45-60': 50,
-    '60+': 65
+
+  // Fallback: if no DB exercises matched, synthesize from ProgramGenerator Day 1
+  if (!exercises.results || exercises.results.length === 0) {
+    const { ProgramGenerator } = await import('./ai-program-generator.js')
+    const programGenerator = new ProgramGenerator()
+    const pg = await programGenerator.generatePersonalized14DayProgram(profile, [])
+    const day1 = pg.daily_plans[1]
+    const fallback = (day1.main_exercises || []).slice(0, 6).map((ex: any, idx: number) => ({
+      id: 10000 + idx,
+      name: ex.name || ex.exercise_name,
+      category: ex.category || 'strength',
+      subcategory: '',
+      primary_muscle_group: Array.isArray(ex.target_muscle_groups) ? ex.target_muscle_groups[0] : (ex.primary_muscle_group || ''),
+      secondary_muscle_groups: '[]',
+      equipment_required: JSON.stringify(ex.equipment_required || ['bodyweight']),
+      difficulty_level: ex.intensity_level || 3,
+      instructions: `Tempo: ${ex.tempo_notes || 'controlled'}. ${ex.coaching_cue || ''}`,
+      form_cues: ex.coaching_cue || '',
+      safety_tips: '',
+      contraindications: '[]',
+      progressions: '[]',
+      regressions: '[]',
+      estimated_calories_per_minute: 7,
+      is_active: 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }))
+
+    // Return structure consistent with the rest of the function below
+    return {
+      name: `Personalized ${fitness_profile.primary_goal.replace('_', ' ').toUpperCase()} Workout`,
+      estimated_duration: durationMap[fitness_profile.workout_duration] || 30,
+      estimated_calories: Math.round((durationMap[fitness_profile.workout_duration] || 30) * 8),
+      difficulty_score: maxDifficulty,
+      exercises: fallback,
+      structure: {
+        warmup: ['Jumping Jacks', 'Bodyweight Squat'],
+        main: fallback.slice(0, 4).map((e: any) => e.name),
+        cooldown: ['Downward Dog']
+      },
+      notes: `Customized for ${fitness_profile.experience_level} level ${fitness_profile.primary_goal.replace('_', ' ')} goals`
+    }
   }
   
+  // Calculate workout duration based on user preference
   const targetDuration = durationMap[fitness_profile.workout_duration] || 30
   const estimatedCalories = Math.round(targetDuration * 8) // Rough estimate
   

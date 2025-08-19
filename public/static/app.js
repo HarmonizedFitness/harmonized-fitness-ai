@@ -567,6 +567,18 @@ class FitnessAssessment {
     }
   }
   
+  // Maintain UI labels but align hidden values to backend canonical tokens where needed
+  // This keeps UX identical while the API receives consistent values
+  static canonicalizeEquipment(values) {
+    const MAP = {
+      bodyweight_only: 'bodyweight',
+      barbells: 'barbell',
+      trx_suspension: 'trx',
+      pullup_bar: 'pull_up_bar'
+    };
+    return values.map(v => MAP[v] || v);
+  }
+  
   // Handle Phase 3 form submission
   async handlePhase3Submit(form) {
     const formData = new FormData(form);
@@ -598,7 +610,7 @@ class FitnessAssessment {
     
     try {
       const response = await axios.post(`/api/users/${this.userData.user_id}/equipment`, {
-        equipment: equipment
+        equipment: FitnessAssessment.canonicalizeEquipment(equipment)
       });
       
       if (response.data.success) {
@@ -1030,7 +1042,7 @@ class FitnessAssessment {
     console.log('Claiming program - closing modal and showing next steps');
     
     // Close the modal
-    document.getElementById('program-modal').classList.add('hidden');
+    this.closeModal();
     
     // Show a success message or redirect to next step
     const successMessage = document.createElement('div');

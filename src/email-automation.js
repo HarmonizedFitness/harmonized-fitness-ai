@@ -19,7 +19,7 @@ export class EmailAutomation {
       await this.scheduleAllProgramEmails(userProfile, program, emailAddress);
       
       // Track program start in database
-      await this.trackProgramStart(userProfile.user_id, program.id);
+      await this.trackProgramStart(userProfile.user?.id || userProfile.user_id, program.id);
       
       return { success: true, message: 'Program delivery initiated successfully' };
     } catch (error) {
@@ -70,16 +70,14 @@ export class EmailAutomation {
     const schedulePromises = [];
 
     for (let day = 2; day <= 14; day++) {
-      const deliveryDate = new Date();
-      deliveryDate.setDate(deliveryDate.getDate() + (day - 1));
-      deliveryDate.setHours(6, 0, 0, 0); // 6 AM delivery
+      // Compute 6 AM America/New_York in UTC seconds (10:00 UTC during EDT)
+      const sendAt = this.computeSixAmEasternUnix(day);
 
       const emailContent = this.generateDailyEmail(day, userProfile, program, emailAddress);
       
-      // In production, this would use a job queue like Cloudflare Queues
-      // For now, we'll store the schedule in the database
+      // Use SendGrid native scheduling so emails actually queue now
       schedulePromises.push(
-        this.scheduleEmail(emailContent, deliveryDate, userProfile.user_id, day)
+        this.sendEmail(emailContent, null, sendAt)
       );
     }
 
@@ -444,7 +442,7 @@ Harmonized Fitness
   }
 
   // Send email using SendGrid API
-  async sendEmail(emailContent, apiKey = null) {
+  async sendEmail(emailContent, apiKey = null, sendAt = null) {
     try {
       console.log('Sending email via SendGrid:', emailContent.subject, 'to', emailContent.to);
       
@@ -460,7 +458,8 @@ Harmonized Fitness
         personalizations: [
           {
             to: [{ email: emailContent.to, name: emailContent.to_name || '' }],
-            subject: emailContent.subject
+            subject: emailContent.subject,
+            ...(sendAt ? { send_at: sendAt } : {})
           }
         ],
         from: {
@@ -478,6 +477,11 @@ Harmonized Fitness
           }
         ]
       };
+
+      // Also set top-level send_at for redundancy (applies to all personalizations)
+      if (sendAt) {
+        sendGridPayload.send_at = sendAt;
+      }
 
       console.log('SendGrid payload from:', sendGridPayload.from.email);
       console.log('SendGrid payload to:', sendGridPayload.personalizations[0].to[0].email);
@@ -521,12 +525,19 @@ Harmonized Fitness
       .trim();
   }
 
-  // Schedule email for future delivery
+  // Compute a UNIX timestamp for 6 AM Eastern on Day N relative to today
+  computeSixAmEasternUnix(day) {
+    // Day 1 is today; for scheduling we use Day N at 6 AM Eastern
+    const target = new Date();
+    target.setUTCDate(target.getUTCDate() + (day - 1));
+    // 6 AM America/New_York ~= 10:00 UTC during EDT; to avoid timezone libraries, schedule at 10:00 UTC
+    target.setUTCHours(10, 0, 0, 0);
+    return Math.floor(target.getTime() / 1000);
+  }
+
+  // Schedule email for future delivery (kept for logging/analytics if needed)
   async scheduleEmail(emailContent, deliveryDate, userId, day) {
-    // This would use Cloudflare Queues or similar scheduling service
-    console.log(`Scheduling email for Day ${day} on ${deliveryDate.toISOString()}`);
-    
-    // For now, store in database for later processing
+    console.log(`Scheduling email (legacy log) for Day ${day} on ${deliveryDate.toISOString()}`);
     return {
       success: true,
       scheduled_id: `schedule-${userId}-${day}`,

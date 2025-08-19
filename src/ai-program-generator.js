@@ -418,6 +418,47 @@ export class ProgramGenerator {
     return templates;
   }
 
+  // Generate functional conditioning templates (missing earlier, now implemented)
+  generateFunctionalTemplates(equipment, primaryGoal) {
+    const templates = [];
+
+    // TRX / Suspension
+    if (equipment.includes('trx')) {
+      templates.push(
+        { name: 'TRX Row', category: 'functional', bodyPart: 'back', equipment: 'trx' },
+        { name: 'TRX Chest Press', category: 'functional', bodyPart: 'chest', equipment: 'trx' },
+        { name: 'TRX Squat to Row', category: 'functional', bodyPart: 'full_body', equipment: 'trx' },
+        { name: 'TRX Fallouts', category: 'functional', bodyPart: 'core', equipment: 'trx' }
+      );
+    }
+
+    // Bands
+    if (equipment.includes('resistance_bands')) {
+      templates.push(
+        { name: 'Band Rows', category: 'functional', bodyPart: 'back', equipment: 'resistance_bands' },
+        { name: 'Band Press-outs', category: 'functional', bodyPart: 'chest', equipment: 'resistance_bands' },
+        { name: 'Band Squats', category: 'functional', bodyPart: 'legs', equipment: 'resistance_bands' }
+      );
+    }
+
+    // Dumbbells — functional moves
+    if (equipment.includes('dumbbells')) {
+      templates.push(
+        { name: 'Dumbbell Clean to Press', category: 'functional', bodyPart: 'full_body', equipment: 'dumbbells' },
+        { name: 'Suitcase March', category: 'functional', bodyPart: 'core', equipment: 'dumbbells' }
+      );
+    }
+
+    // Universal bodyweight functional
+    templates.push(
+      { name: 'Lateral Shuffles', category: 'functional', bodyPart: 'full_body', equipment: 'bodyweight' },
+      { name: 'Walkouts to Plank', category: 'functional', bodyPart: 'core', equipment: 'bodyweight' },
+      { name: 'Reverse Lunges to Knee Drive', category: 'functional', bodyPart: 'legs', equipment: 'bodyweight' }
+    );
+
+    return templates.slice(0, 8);
+  }
+
   // Generate core templates
   generateCoreTemplates(equipment, primaryGoal) {
     return [
