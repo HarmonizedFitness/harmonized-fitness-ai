@@ -70,8 +70,8 @@ export class EmailAutomation {
     const schedulePromises = [];
 
     for (let day = 2; day <= 14; day++) {
-      // Compute 6 AM America/New_York in UTC seconds (10:00 UTC during EDT)
-      const sendAt = this.computeSixAmEasternUnix(day);
+      // Compute 1:00 AM America/New_York in UTC seconds (~05:00 UTC during EDT)
+      const sendAt = this.computeOneAmEasternUnix(day);
 
       const emailContent = this.generateDailyEmail(day, userProfile, program, emailAddress);
       
@@ -525,13 +525,13 @@ Harmonized Fitness
       .trim();
   }
 
-  // Compute a UNIX timestamp for 6 AM Eastern on Day N relative to today
-  computeSixAmEasternUnix(day) {
-    // Day 1 is today; for scheduling we use Day N at 6 AM Eastern
+  // Compute a UNIX timestamp for 1:00 AM Eastern on Day N relative to today
+  computeOneAmEasternUnix(day) {
+    // Day 1 is today; for scheduling we use Day N at 1 AM Eastern
     const target = new Date();
     target.setUTCDate(target.getUTCDate() + (day - 1));
-    // 6 AM America/New_York ~= 10:00 UTC during EDT; to avoid timezone libraries, schedule at 10:00 UTC
-    target.setUTCHours(10, 0, 0, 0);
+    // 1 AM America/New_York ~= 05:00 UTC during EDT; to avoid timezone libraries, schedule at 05:00 UTC
+    target.setUTCHours(5, 0, 0, 0);
     return Math.floor(target.getTime() / 1000);
   }
 
